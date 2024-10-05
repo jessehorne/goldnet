@@ -2,20 +2,30 @@ package packets
 
 const (
 	// From Client
-
 	PacketUserJoin byte = iota
 	PacketUserLeave
-	PacketInputKey
+	PacketAction
 	PacketSendMessage
 )
 
 const (
 	// To Client
-
 	PacketChunk byte = iota
 	PacketPlayerJoined
 	PacketPlayerDisconnected
 	PacketPlayerMoved
+)
+
+const (
+	// Actions
+	ActionMoveUp byte = iota
+	ActionMoveDown
+	ActionMoveLeft
+	ActionMoveRight
+)
+
+var (
+	MovementActions = []byte{ActionMoveUp, ActionMoveDown, ActionMoveLeft, ActionMoveRight}
 )
 
 type RawPacket struct {
@@ -36,4 +46,13 @@ func NewRawPacket(data []byte) *RawPacket {
 
 func (p *RawPacket) ToBytes() []byte {
 	return append([]byte{p.Type}, p.Data...)
+}
+
+func IsMovementAction(a byte) bool {
+	for _, k := range MovementActions {
+		if a == k {
+			return true
+		}
+	}
+	return false
 }

@@ -1,6 +1,10 @@
 package game
 
-import "net"
+import (
+	"fmt"
+	"github.com/jessehorne/goldnet/internal/server/packets"
+	"net"
+)
 
 type Player struct {
 	ID        int64
@@ -21,5 +25,18 @@ func NewPlayer(id, x, y int64, c net.Conn) *Player {
 		Health:    255,
 		Inventory: []InventoryItem{},
 		Conn:      c,
+	}
+}
+
+func (p *Player) Action(a byte) {
+	if a == packets.ActionMoveLeft {
+		p.X--
+		fmt.Println("a player moved left")
+	} else if a == packets.ActionMoveRight {
+		p.X++
+	} else if a == packets.ActionMoveUp {
+		p.Y--
+	} else if a == packets.ActionMoveDown {
+		p.Y++
 	}
 }

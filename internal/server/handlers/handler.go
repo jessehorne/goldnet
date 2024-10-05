@@ -19,7 +19,7 @@ func NewPacketHandler(gs *game.GameState) *PacketHandler {
 		Handlers: map[byte]Handler{
 			packets.PacketUserJoin:    ClientUserJoinHandler,
 			packets.PacketUserLeave:   ClientUserLeaveHandler,
-			packets.PacketInputKey:    ClientKeyHandler,
+			packets.PacketAction:      ClientActionHandler,
 			packets.PacketSendMessage: ClientMessageHandler,
 		},
 	}

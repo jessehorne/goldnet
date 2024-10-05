@@ -18,7 +18,11 @@ func main() {
 	done := make(chan struct{})
 
 	go func() {
-		conn.Write([]byte{packets.PacketUserJoin, byte('\n')})
+		conn.Write([]byte{packets.PacketUserJoin, '\n'})
+		for {
+			conn.Write([]byte{packets.PacketAction, packets.ActionMoveLeft, '\n'})
+			time.Sleep(1 * time.Second)
+		}
 	}()
 
 	reader := bufio.NewReader(conn)
@@ -27,11 +31,11 @@ func main() {
 		select {
 		case <-done:
 			time.Sleep(1 * time.Second)
-			conn.Write([]byte{packets.PacketUserLeave, byte('\n')})
+			conn.Write([]byte{packets.PacketUserLeave, '\n'})
 			fmt.Println("shutting down")
 			return
 		default:
-			res, err := reader.ReadBytes(byte('\n'))
+			res, err := reader.ReadBytes('\n')
 			if err != nil {
 				panic(err)
 			}
@@ -39,6 +43,10 @@ func main() {
 				fmt.Println("another player joined")
 			} else if res[0] == packets.PacketPlayerDisconnected {
 				fmt.Println("a player disconnected")
+			} else if res[0] == packets.PacketPlayerMoved {
+				id, x, y := packets.ParseMovePacket(res[1:])
+				s := fmt.Sprintf("Player ID '%d' moved to (%d,%d)", id, x, y)
+				fmt.Println(s)
 			}
 		}
 	}
