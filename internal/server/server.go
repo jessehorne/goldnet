@@ -80,7 +80,7 @@ func (s *Server) HandleConnection(conn net.Conn, handler *handlers.PacketHandler
 		bytes, err := reader.ReadBytes(byte('\n'))
 		if err != nil {
 			if err == io.EOF {
-				handlers.ClientUserLeaveHandler(s.GameState, playerID, conn, bytes)
+				handlers.ServerUserDisconnectedHandler(s.GameState, playerID, conn, bytes)
 				break
 			} else {
 				break

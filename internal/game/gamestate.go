@@ -1,8 +1,6 @@
 package game
 
 import (
-	"github.com/jessehorne/goldnet/internal/server/packets"
-	"github.com/jessehorne/goldnet/internal/util"
 	"log"
 	"net"
 	"os"
@@ -32,7 +30,6 @@ func (gs *GameState) GetPlayer(playerID int64) *Player {
 
 func (gs *GameState) AddPlayer(playerID int64, c net.Conn) {
 	gs.Players[playerID] = NewPlayer(playerID, 0, 0, c)
-	gs.SendNearbyChunksToPlayer(gs.Players[playerID])
 }
 
 func (gs *GameState) RemovePlayer(playerID int64) {
@@ -44,43 +41,6 @@ func (gs *GameState) HandlePlayerAction(playerID int64, action byte) {
 	p := gs.GetPlayer(playerID)
 	if p != nil {
 		p.Action(action)
-
-		if packets.IsMovementAction(action) {
-			gs.HandlePlayerMovementAction(p, action)
-		}
-	}
-}
-
-func (gs *GameState) HandlePlayerMovementAction(p *Player, action byte) {
-	// send movement to any players nearby
-	movePacket := packets.BuildMovePacket(p.ID, p.X, p.Y)
-	for _, o := range gs.Players {
-		if o != nil {
-			if o.ID != p.ID {
-				if util.Distance(o.X, o.Y, p.X, p.Y) < 100 {
-					p.Conn.Write(movePacket)
-				}
-			}
-		}
-	}
-
-	// check if the moving user needs new chunks
-	newChunkX := p.X / CHUNK_W
-	newChunkY := p.Y / CHUNK_H
-	if newChunkX != p.OldChunkX || newChunkY != p.OldChunkY {
-		p.OldChunkX = p.X / CHUNK_W
-		p.OldChunkY = p.Y / CHUNK_H
-		gs.SendNearbyChunksToPlayer(p)
-	}
-}
-
-func (gs *GameState) SendNearbyChunksToPlayer(p *Player) {
-	chunksToSend := gs.GetChunksAroundPlayer(p)
-	for _, c := range chunksToSend {
-		chunkPacket := []byte{packets.PacketChunk}
-		chunkPacket = append(chunkPacket, c.ToBytes()...)
-		chunkPacket = append(chunkPacket, '\n')
-		p.Conn.Write(chunkPacket)
 	}
 }
 

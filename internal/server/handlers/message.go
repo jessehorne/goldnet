@@ -5,6 +5,6 @@ import (
 	"net"
 )
 
-func ClientMessageHandler(gs *game.GameState, playerID int64, conn net.Conn, data []byte) {
+func ServerMessageHandler(gs *game.GameState, playerID int64, conn net.Conn, data []byte) {
 
 }

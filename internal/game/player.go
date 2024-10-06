@@ -1,7 +1,7 @@
 package game
 
 import (
-	"github.com/jessehorne/goldnet/internal/server/packets"
+	"github.com/jessehorne/goldnet/internal/shared/packets"
 	"net"
 )
 

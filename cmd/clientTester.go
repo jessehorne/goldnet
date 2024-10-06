@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/jessehorne/goldnet/internal/server/packets"
+	"github.com/jessehorne/goldnet/internal/shared/packets"
 	"net"
 	"time"
 )
@@ -47,6 +47,8 @@ func main() {
 				id, x, y := packets.ParseMovePacket(res[1:])
 				s := fmt.Sprintf("Player ID '%d' moved to (%d,%d)", id, x, y)
 				fmt.Println(s)
+			} else if res[0] == packets.PacketChunk {
+				fmt.Println("got chunk")
 			}
 		}
 	}
