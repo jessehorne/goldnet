@@ -40,13 +40,9 @@ func (c *Client) Listen() {
 	handler := handlers.NewPacketHandler(c.GameState)
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGTERM)
-	for {
-		select {
-		case <-done:
-			c.Conn.Write(packets.BuildUserLeavePacket())
-			c.Close()
-			return
-		default:
+
+	go func() {
+		for {
 			// first 8 bytes (int64) is how large this packet is in bytes
 			var sizeBytes []byte
 			for i := 0; i < 8; i++ {
@@ -75,6 +71,13 @@ func (c *Client) Listen() {
 			}
 			handler.Handle(c.Conn, data)
 		}
+	}()
+	
+	select {
+	case <-done:
+		c.Conn.Write(packets.BuildUserLeavePacket())
+		c.Close()
+		return
 	}
 }
 
