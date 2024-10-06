@@ -1,4 +1,4 @@
-package client
+package gui
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 
 type Chat struct {
 	Root       *tview.TextView
+	Focused    bool
 	Messages   []string
 	MaxHistory int
 }

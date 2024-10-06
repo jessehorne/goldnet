@@ -12,6 +12,7 @@ const (
 	// To Client
 	PacketChunk byte = iota
 	PacketPlayerJoined
+	PacketPlayerSelfJoined
 	PacketPlayerDisconnected
 	PacketPlayerMoved
 )

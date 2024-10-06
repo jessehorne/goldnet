@@ -8,16 +8,18 @@ import (
 )
 
 type GameState struct {
-	Players map[int64]*Player
-	Logger  *log.Logger
-	Chunks  map[int64]map[int64]*Chunk
+	Players  map[int64]*Player
+	Logger   *log.Logger
+	Chunks   map[int64]map[int64]*Chunk
+	IntStore map[string]int64
 }
 
 func NewGameState() *GameState {
 	return &GameState{
-		Logger:  log.New(os.Stdout, "[GoldNet] (GameState) ", log.Ldate|log.Ltime),
-		Players: map[int64]*Player{},
-		Chunks:  map[int64]map[int64]*Chunk{},
+		Logger:   log.New(os.Stdout, "[GoldNet] (GameState) ", log.Ldate|log.Ltime),
+		Players:  map[int64]*Player{},
+		Chunks:   map[int64]map[int64]*Chunk{},
+		IntStore: map[string]int64{},
 	}
 }
 
@@ -46,8 +48,8 @@ func (gs *GameState) HandlePlayerAction(player *Player, action byte) {
 
 func (gs *GameState) GetChunksAroundPlayer(p *Player) []*Chunk {
 	var chunks []*Chunk
-	for y := p.OldChunkY - p.ChunkDistance; y < p.OldChunkY+p.ChunkDistance; y++ {
-		for x := p.OldChunkX - p.ChunkDistance; x < p.OldChunkX+p.ChunkDistance; x++ {
+	for y := p.OldChunkY - p.ChunkDistance/2; y < p.OldChunkY+p.ChunkDistance/2+1; y++ {
+		for x := p.OldChunkX - p.ChunkDistance*2 - 1; x < p.OldChunkX+p.ChunkDistance*4; x++ {
 			_, ok := gs.Chunks[y][x]
 			if !ok {
 				newChunk := NewChunk(x, y)

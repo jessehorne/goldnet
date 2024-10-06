@@ -20,6 +20,9 @@ func ServerUserJoinHandler(gs *game.GameState, playerID int64, conn net.Conn, da
 	// add player to gamestates list of players
 	gs.AddPlayer(playerID, conn)
 
+	// send self join packet to player with their ID
+	conn.Write(packets.BuildPlayerSelfJoinedPacket(playerID, 0, 0))
+
 	// send player nearby chunks
 	player := gs.GetPlayer(playerID)
 	if player != nil {

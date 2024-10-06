@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"fmt"
+	"github.com/jessehorne/goldnet/internal/client/gui"
 	"github.com/jessehorne/goldnet/internal/game"
 	"net"
 )
 
-func ClientChunkHandler(gs *game.GameState, conn net.Conn, data []byte) {
+func ClientChunkHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []byte) {
 	chunk := game.ParseChunkFromBytes(data)
 	gs.AddChunk(chunk)
-	gs.Logger.Println("received chunk", chunk.X, chunk.Y)
+	g.Chat.AddMessage(fmt.Sprintf("len of chunks is %d", len(gs.Chunks)))
 }

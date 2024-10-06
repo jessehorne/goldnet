@@ -1,4 +1,4 @@
-package client
+package gui
 
 import (
 	"github.com/gdamore/tcell/v2"

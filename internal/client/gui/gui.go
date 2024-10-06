@@ -1,4 +1,4 @@
-package client
+package gui
 
 import (
 	"github.com/gdamore/tcell/v2"
@@ -12,7 +12,7 @@ type GUI struct {
 	Input *Input
 }
 
-func NewGUI() *GUI {
+func NewGUI(inputFunc func(event *tcell.EventKey) *tcell.EventKey) *GUI {
 	gui := &GUI{}
 
 	world := NewWorld()
@@ -20,16 +20,13 @@ func NewGUI() *GUI {
 	input := NewInput()
 
 	grid := tview.NewGrid().
-		SetRows(25, 10, 3).
+		SetRows(25, 8, 1).
 		SetColumns(80).
 		SetBorders(true)
 
-	grid.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		gui.HandleInput(event)
-		return event
-	})
+	grid.SetInputCapture(inputFunc)
 
-	grid.AddItem(world.Root, 0, 0, 1, 80, 0, 0, false)
+	grid.AddItem(world.Root, 0, 0, 1, 80, 0, 0, true)
 	grid.AddItem(chat.Root, 1, 0, 1, 80, 0, 0, false)
 	grid.AddItem(input.Root, 2, 0, 1, 80, 0, 0, false)
 
@@ -41,5 +38,9 @@ func NewGUI() *GUI {
 }
 
 func (g *GUI) HandleInput(event *tcell.EventKey) {
-	g.Chat.AddMessage(event.Name())
+	if g.World.Focused {
+		if event.Rune() == 'a' {
+
+		}
+	}
 }
