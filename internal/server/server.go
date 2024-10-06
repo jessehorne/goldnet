@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/jessehorne/goldnet/internal/game"
 	"github.com/jessehorne/goldnet/internal/server/handlers"
-	"io"
+	"github.com/jessehorne/goldnet/internal/util"
 	"log"
 	"net"
 	"os"
@@ -77,16 +77,36 @@ func (s *Server) HandleConnection(conn net.Conn, handler *handlers.PacketHandler
 	playerID := int64(len(s.GameState.Players))
 
 	for {
-		bytes, err := reader.ReadBytes(byte('\n'))
-		if err != nil {
-			if err == io.EOF {
-				handlers.ServerUserDisconnectedHandler(s.GameState, playerID, conn, bytes)
-				break
-			} else {
-				break
+		// first 8 bytes (int64) is how large this packet is in bytes
+		var sizeBytes []byte
+		for i := 0; i < 8; i++ {
+			b, err := reader.ReadByte()
+			if err != nil {
+				continue
 			}
+			sizeBytes = append(sizeBytes, b)
 		}
-		handler.Handle(playerID, conn, bytes)
+
+		if len(sizeBytes) != 8 {
+			continue
+		}
+
+		// convert size to int64
+		size := util.BytesToInt64(sizeBytes)
+
+		// read that many bytes which is the packet
+		var data []byte
+		for i := int64(0); i < size; i++ {
+			b, err := reader.ReadByte()
+			if err != nil {
+				s.Logger.Println("packet read error:", err.Error())
+				continue
+			}
+			data = append(data, b)
+		}
+
+		// handle the packet and start over
+		handler.Handle(playerID, conn, data)
 	}
 }
 

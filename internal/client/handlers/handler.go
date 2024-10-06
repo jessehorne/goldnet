@@ -20,6 +20,7 @@ func NewPacketHandler(gs *game.GameState) *PacketHandler {
 			packets.PacketPlayerJoined:       ClientPlayerJoinedHandler,
 			packets.PacketPlayerDisconnected: ClientPlayerDisconnectedHandler,
 			packets.PacketPlayerMoved:        ClientPlayerMovedHandler,
+			packets.PacketChunk:              ClientChunkHandler,
 		},
 	}
 }

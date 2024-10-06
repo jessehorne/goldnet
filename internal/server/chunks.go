@@ -7,9 +7,6 @@ import (
 
 func SendChunksToPlayer(p *game.Player, chunks []*game.Chunk) {
 	for _, c := range chunks {
-		chunkPacket := []byte{packets.PacketChunk}
-		chunkPacket = append(chunkPacket, c.ToBytes()...)
-		chunkPacket = append(chunkPacket, '\n')
-		p.Conn.Write(chunkPacket)
+		p.Conn.Write(packets.BuildChunkPacket(c.ToBytes()))
 	}
 }

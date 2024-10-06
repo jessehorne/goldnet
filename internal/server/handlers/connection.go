@@ -14,11 +14,20 @@ func ServerUserJoinHandler(gs *game.GameState, playerID int64, conn net.Conn, da
 		if p == nil {
 			continue
 		}
-		p.Conn.Write([]byte{packets.PacketPlayerJoined, '\n'})
+		p.Conn.Write(packets.BuildPlayerJoinedPacket(playerID))
 	}
 
 	// add player to gamestates list of players
 	gs.AddPlayer(playerID, conn)
+
+	// send player nearby chunks
+	player := gs.GetPlayer(playerID)
+	if player != nil {
+		nearbyChunks := gs.GetChunksAroundPlayer(player)
+		for _, nc := range nearbyChunks {
+			conn.Write(packets.BuildChunkPacket(nc.ToBytes()))
+		}
+	}
 }
 
 func ServerUserDisconnectedHandler(gs *game.GameState, playerID int64, conn net.Conn, data []byte) {
@@ -32,6 +41,6 @@ func ServerUserDisconnectedHandler(gs *game.GameState, playerID int64, conn net.
 		if p == nil {
 			continue
 		}
-		p.Conn.Write([]byte{packets.PacketPlayerDisconnected, '\n'})
+		p.Conn.Write(packets.BuildPlayerDisconnectedPacket(playerID))
 	}
 }

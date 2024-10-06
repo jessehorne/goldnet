@@ -1,6 +1,7 @@
 package game
 
 import (
+	"github.com/jessehorne/goldnet/internal/util"
 	"log"
 	"net"
 	"os"
@@ -37,10 +38,9 @@ func (gs *GameState) RemovePlayer(playerID int64) {
 	gs.Players[playerID] = nil
 }
 
-func (gs *GameState) HandlePlayerAction(playerID int64, action byte) {
-	p := gs.GetPlayer(playerID)
-	if p != nil {
-		p.Action(action)
+func (gs *GameState) HandlePlayerAction(player *Player, action byte) {
+	if player != nil {
+		player.Action(action)
 	}
 }
 
@@ -62,4 +62,24 @@ func (gs *GameState) GetChunksAroundPlayer(p *Player) []*Chunk {
 		}
 	}
 	return chunks
+}
+
+func (gs *GameState) GetPlayersAroundPlayer(p *Player) []*Player {
+	var players []*Player
+	if p == nil {
+		return players
+	}
+	for _, otherPlayer := range gs.Players {
+		if otherPlayer == nil {
+			continue
+		}
+		if p.ID == otherPlayer.ID {
+			continue
+		}
+
+		if util.Distance(p.X, p.Y, otherPlayer.X, otherPlayer.Y) < 10 {
+			players = append(players, otherPlayer)
+		}
+	}
+	return players
 }

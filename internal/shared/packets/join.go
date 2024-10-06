@@ -2,15 +2,16 @@ package packets
 
 import "github.com/jessehorne/goldnet/internal/util"
 
-type ClientJoinPacket struct{}
-
 func BuildPlayerJoinedPacket(playerID int64) []byte {
-	p := []byte{PacketPlayerJoined}
+	p := util.Int64ToBytes(9) // total size should be 8 bytes (not counting this) because the playerID is 8 bytes
+	p = append(p, PacketPlayerJoined)
 	p = append(p, util.Int64ToBytes(playerID)...)
-	p = append(p, '\n')
 	return p
 }
 
-func ParsePlayerJoinedPacket(data []byte) int64 {
-	return util.BytesToInt64(data)
+func BuildPlayerDisconnectedPacket(playerID int64) []byte {
+	p := util.Int64ToBytes(9) // total size should be 8 bytes (not counting this) because the playerID is 8 bytes
+	p = append(p, PacketPlayerDisconnected)
+	p = append(p, util.Int64ToBytes(playerID)...)
+	return p
 }

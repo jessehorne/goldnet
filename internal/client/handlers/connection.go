@@ -5,10 +5,10 @@ import (
 	"net"
 )
 
-func ClientPlayerJoinedHandler(gs *game.GameState, conn net.Conn, p []byte) {
-
+func ClientPlayerJoinedHandler(gs *game.GameState, conn net.Conn, data []byte) {
+	gs.Logger.Println("a user joined")
 }
 
-func ClientPlayerDisconnectedHandler(gs *game.GameState, conn net.Conn, p []byte) {
-
+func ClientPlayerDisconnectedHandler(gs *game.GameState, conn net.Conn, data []byte) {
+	gs.Logger.Println("a user disconnected")
 }
