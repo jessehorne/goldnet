@@ -83,3 +83,11 @@ func (gs *GameState) GetPlayersAroundPlayer(p *Player) []*Player {
 	}
 	return players
 }
+
+func (gs *GameState) AddChunk(chunk *Chunk) {
+	_, ok := gs.Chunks[chunk.Y]
+	if !ok {
+		gs.Chunks[chunk.Y] = map[int64]*Chunk{}
+	}
+	gs.Chunks[chunk.Y][chunk.X] = chunk
+}

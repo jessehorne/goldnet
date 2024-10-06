@@ -7,5 +7,6 @@ import (
 
 func ClientChunkHandler(gs *game.GameState, conn net.Conn, data []byte) {
 	chunk := game.ParseChunkFromBytes(data)
+	gs.AddChunk(chunk)
 	gs.Logger.Println("received chunk", chunk.X, chunk.Y)
 }

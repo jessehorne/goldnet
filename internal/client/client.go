@@ -72,7 +72,7 @@ func (c *Client) Listen() {
 			handler.Handle(c.Conn, data)
 		}
 	}()
-	
+
 	select {
 	case <-done:
 		c.Conn.Write(packets.BuildUserLeavePacket())
