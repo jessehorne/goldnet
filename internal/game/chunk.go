@@ -1,6 +1,8 @@
 package game
 
-import "github.com/jessehorne/goldnet/internal/util"
+import (
+	"github.com/jessehorne/goldnet/internal/util"
+)
 
 const (
 	CHUNK_W int64 = 8
@@ -48,22 +50,30 @@ func (c *Chunk) ToBytes() []byte {
 	return data
 }
 
-func ParseChunkFromBytes(data []byte) *Chunk {
-	chunkX := util.BytesToInt64(data[0:8])
-	chunkY := util.BytesToInt64(data[8:16])
-	chunkBytes := [CHUNK_H][CHUNK_W]byte{}
-	counter := 16
-	for y := int64(0); y < CHUNK_H; y++ {
-		for x := int64(0); x < CHUNK_W; x++ {
-			chunkBytes[y][x] = data[counter]
-			counter++
+func ParseChunksFromBytes(data []byte) []*Chunk {
+	chunkCount := util.BytesToInt64(data[0:8])
+	counter := 8
+	var chunks []*Chunk
+	for i := int64(0); i < chunkCount; i++ {
+		chunkX := util.BytesToInt64(data[counter : counter+8])
+		counter += 8
+		chunkY := util.BytesToInt64(data[counter : counter+8])
+		counter += 8
+		chunkBytes := [CHUNK_H][CHUNK_W]byte{}
+		for y := int64(0); y < CHUNK_H; y++ {
+			for x := int64(0); x < CHUNK_W; x++ {
+				chunkBytes[y][x] = data[counter]
+				counter++
+			}
 		}
+		newChunk := &Chunk{
+			X:    chunkX,
+			Y:    chunkY,
+			Data: chunkBytes,
+		}
+		chunks = append(chunks, newChunk)
 	}
-	return &Chunk{
-		X:    chunkX,
-		Y:    chunkY,
-		Data: chunkBytes,
-	}
+	return chunks
 }
 
 func GetChunkFromCoords(x, y int64) (int64, int64) {

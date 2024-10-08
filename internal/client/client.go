@@ -14,7 +14,6 @@ import (
 	"log"
 	"net"
 	"os"
-	"time"
 )
 
 type Client struct {
@@ -46,40 +45,40 @@ func NewClient(tv *tview.Application) (*Client, error) {
 	g := gui.NewGUI(gs, c.HandleInput)
 	c.GUI = g
 
-	go func(c *Client) {
-		c.Loop()
-	}(c)
+	//go func(c *Client) {
+	//	c.Loop()
+	//}(c)
 
 	return c, nil
 }
 
-func (c *Client) Loop() {
-	for {
-		time.After(3000 * time.Millisecond)
-
-		// draw chunks for the first time if applicable
-		if len(c.GameState.Chunks) > 0 && !c.HaveDrawnChunks {
-			c.HaveDrawnChunks = true
-			c.RedrawChunks()
-			c.GUI.Chat.AddMessage(fmt.Sprintf("drawing %d chunks for the first time", len(c.GUI.World.Chunks)))
-			continue
-		}
-
-		// redraw chunks if the player is in a different chunk
-		playerID, ok := c.GameState.GetIntStore("playerID")
-		if !ok {
-			continue
-		}
-
-		p := c.GameState.GetPlayer(playerID)
-		chunkX := p.X / 8
-		chunkY := p.Y / 8
-		if chunkX != p.OldChunkX || chunkY != p.OldChunkY {
-			c.GameState.UpdatePlayerChunks(playerID, chunkX, chunkY)
-			c.RedrawChunks()
-		}
-	}
-}
+//func (c *Client) Loop() {
+//	for {
+//		time.After(3000 * time.Millisecond)
+//
+//		// draw chunks for the first time if applicable
+//		if len(c.GameState.Chunks) > 0 && !c.HaveDrawnChunks {
+//			c.HaveDrawnChunks = true
+//			c.RedrawChunks()
+//			c.GUI.Chat.AddMessage(fmt.Sprintf("drawing %d chunks for the first time", len(c.GUI.World.Chunks)))
+//			continue
+//		}
+//
+//		// redraw chunks if the player is in a different chunk
+//		playerID, ok := c.GameState.GetIntStore("playerID")
+//		if !ok {
+//			continue
+//		}
+//
+//		p := c.GameState.GetPlayer(playerID)
+//		chunkX := p.X / 8
+//		chunkY := p.Y / 8
+//		if chunkX != p.OldChunkX || chunkY != p.OldChunkY {
+//			c.GameState.UpdatePlayerChunks(playerID, chunkX, chunkY)
+//			c.RedrawChunks()
+//		}
+//	}
+//}
 
 func (c *Client) RedrawChunks() {
 	playerID, ok := c.GameState.GetIntStore("playerID")
@@ -100,24 +99,39 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 		if !ok {
 			return event
 		}
-		p := c.GameState.Players[playerID]
+		p := c.GameState.GetPlayer(playerID)
+		if p == nil {
+			return event
+		}
 
 		switch event.Rune() {
 		case 'a':
 			p.X--
 			c.GUI.World.OffsetX++
+			if p.OldChunkX != p.X/8 {
+				p.OldChunkX = p.X / 8
+			}
 			c.Conn.Write(packets.BuildUserMovePacket(sharedPackets.ActionMoveLeft))
 		case 'd':
 			p.X++
 			c.GUI.World.OffsetX--
+			if p.OldChunkX != p.X/8 {
+				p.OldChunkX = p.X / 8
+			}
 			c.Conn.Write(packets.BuildUserMovePacket(sharedPackets.ActionMoveRight))
 		case 'w':
 			p.Y--
 			c.GUI.World.OffsetY++
+			if p.OldChunkY != p.Y/8 {
+				p.OldChunkY = p.Y / 8
+			}
 			c.Conn.Write(packets.BuildUserMovePacket(sharedPackets.ActionMoveUp))
 		case 's':
 			p.Y++
 			c.GUI.World.OffsetY--
+			if p.OldChunkY != p.Y/8 {
+				p.OldChunkY = p.Y / 8
+			}
 			c.Conn.Write(packets.BuildUserMovePacket(sharedPackets.ActionMoveDown))
 		}
 	}

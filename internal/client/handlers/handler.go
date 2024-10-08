@@ -22,7 +22,7 @@ func NewPacketHandler(gs *game.GameState) *PacketHandler {
 			packets.PacketPlayerSelfJoined:   ClientPlayerSelfJoinedHandler,
 			packets.PacketPlayerDisconnected: ClientPlayerDisconnectedHandler,
 			packets.PacketPlayerMoved:        ClientPlayerMovedHandler,
-			packets.PacketChunk:              ClientChunkHandler,
+			packets.PacketChunks:             ClientChunksHandler,
 		},
 	}
 }

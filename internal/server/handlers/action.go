@@ -29,9 +29,13 @@ func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data
 			p.OldChunkX = p.X / game.CHUNK_W
 			p.OldChunkY = p.Y / game.CHUNK_H
 			nearbyChunks := gs.GetChunksAroundPlayer(p)
-			for _, nc := range nearbyChunks {
-				conn.Write(packets.BuildChunkPacket(nc.ToBytes()))
+
+			var chunkData []byte
+			for _, c := range nearbyChunks {
+				chunkData = append(chunkData, c.ToBytes()...)
 			}
+			chunkPacket := packets.BuildChunksPacket(int64(len(nearbyChunks)), chunkData)
+			conn.Write(chunkPacket)
 		}
 	}
 }

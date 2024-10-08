@@ -10,7 +10,7 @@ const (
 
 const (
 	// To Client
-	PacketChunk byte = iota
+	PacketChunks byte = iota
 	PacketPlayerJoined
 	PacketPlayerSelfJoined
 	PacketPlayerDisconnected

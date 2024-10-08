@@ -39,9 +39,11 @@ func ServerUserJoinHandler(gs *game.GameState, playerID int64, conn net.Conn, da
 
 	// send nearby chunks to player
 	nearbyChunks := gs.GetChunksAroundPlayer(newPlayer)
-	for _, nc := range nearbyChunks {
-		conn.Write(packets.BuildChunkPacket(nc.ToBytes()))
+	var chunkData []byte
+	for _, c := range nearbyChunks {
+		chunkData = append(chunkData, c.ToBytes()...)
 	}
+	conn.Write(packets.BuildChunksPacket(int64(len(nearbyChunks)), chunkData))
 }
 
 func ServerUserDisconnectedHandler(gs *game.GameState, playerID int64, conn net.Conn, data []byte) {

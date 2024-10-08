@@ -131,12 +131,14 @@ func (gs *GameState) GetPlayersAroundPlayer(p *Player) []*Player {
 	return players
 }
 
-func (gs *GameState) AddChunk(chunk *Chunk) {
+func (gs *GameState) AddChunks(chunks []*Chunk) {
 	gs.Mutex.Lock()
 	defer gs.Mutex.Unlock()
-	_, ok := gs.Chunks[chunk.Y]
-	if !ok {
-		gs.Chunks[chunk.Y] = map[int64]*Chunk{}
+	for _, c := range chunks {
+		_, ok := gs.Chunks[c.Y]
+		if !ok {
+			gs.Chunks[c.Y] = map[int64]*Chunk{}
+		}
+		gs.Chunks[c.Y][c.X] = c
 	}
-	gs.Chunks[chunk.Y][chunk.X] = chunk
 }
