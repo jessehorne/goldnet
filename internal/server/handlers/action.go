@@ -23,7 +23,6 @@ func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data
 		}
 
 		// send chunks if players chunk has updated
-		// check if the moving user needs new chunks
 		newChunkX := p.X / game.CHUNK_W
 		newChunkY := p.Y / game.CHUNK_H
 		if newChunkX != p.OldChunkX || newChunkY != p.OldChunkY {

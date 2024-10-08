@@ -6,28 +6,26 @@ import (
 )
 
 type Player struct {
-	ID            int64
-	X             int64
-	Y             int64
-	ChunkDistance int64 // how many chunks load around the player
-	OldChunkX     int64
-	OldChunkY     int64
-	Sprite        rune
-	Health        byte
-	Inventory     []InventoryItem
-	Conn          net.Conn
+	ID        int64
+	X         int64
+	Y         int64
+	OldChunkX int64
+	OldChunkY int64
+	Sprite    rune
+	Health    byte
+	Inventory []InventoryItem
+	Conn      net.Conn
 }
 
 func NewPlayer(id, x, y int64, c net.Conn) *Player {
 	return &Player{
-		ID:            id,
-		X:             x,
-		Y:             y,
-		ChunkDistance: 1,
-		Sprite:        '@',
-		Health:        255,
-		Inventory:     []InventoryItem{},
-		Conn:          c,
+		ID:        id,
+		X:         x,
+		Y:         y,
+		Sprite:    '@',
+		Health:    255,
+		Inventory: []InventoryItem{},
+		Conn:      c,
 	}
 }
 

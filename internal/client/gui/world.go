@@ -8,22 +8,24 @@ import (
 )
 
 type World struct {
-	Root    *tview.Box
-	Focused bool
-	Chunks  []*game.Chunk
-	OffsetX int
-	OffsetY int
-	Mutex   sync.Mutex
+	Root      *tview.Box
+	Focused   bool
+	Chunks    []*game.Chunk
+	OffsetX   int
+	OffsetY   int
+	Mutex     sync.Mutex
+	GameState *game.GameState
 }
 
-func NewWorld() *World {
+func NewWorld(gs *game.GameState) *World {
 	box := tview.NewBox().SetBorder(false)
 	m := &World{
-		Root:    box,
-		Focused: true,
-		Chunks:  []*game.Chunk{},
-		OffsetX: 60,
-		OffsetY: 10,
+		Root:      box,
+		Focused:   true,
+		Chunks:    []*game.Chunk{},
+		OffsetX:   80,
+		OffsetY:   13,
+		GameState: gs,
 	}
 	box = box.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 		m.Draw(screen, x, y, width, height)
@@ -35,6 +37,10 @@ func NewWorld() *World {
 func (m *World) Draw(screen tcell.Screen, x, y, width, height int) {
 	m.Mutex.Lock()
 	defer m.Mutex.Unlock()
+
+	m.GameState.Mutex.Lock()
+	defer m.GameState.Mutex.Unlock()
+
 	for _, c := range m.Chunks {
 		startX := c.X * game.CHUNK_W
 		startY := c.Y * game.CHUNK_H
@@ -49,7 +55,12 @@ func (m *World) Draw(screen tcell.Screen, x, y, width, height int) {
 		}
 	}
 
-	screen.SetContent(width/2, height/2, '@', nil, tcell.StyleDefault.Foreground(tcell.ColorWhite))
+	// draw players
+	for _, p := range m.GameState.Players {
+		if p != nil {
+			screen.SetContent(m.OffsetX+int(p.X), m.OffsetY+int(p.Y), '@', nil, tcell.StyleDefault.Foreground(tcell.ColorWhite))
+		}
+	}
 }
 
 func (m *World) UpdateChunks(chunks []*game.Chunk) {

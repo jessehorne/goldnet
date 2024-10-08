@@ -2,6 +2,7 @@ package gui
 
 import (
 	"github.com/gdamore/tcell/v2"
+	"github.com/jessehorne/goldnet/internal/game"
 	"github.com/rivo/tview"
 )
 
@@ -12,10 +13,10 @@ type GUI struct {
 	Input *Input
 }
 
-func NewGUI(inputFunc func(event *tcell.EventKey) *tcell.EventKey) *GUI {
+func NewGUI(gs *game.GameState, inputFunc func(event *tcell.EventKey) *tcell.EventKey) *GUI {
 	gui := &GUI{}
 
-	world := NewWorld()
+	world := NewWorld(gs)
 	chat := NewChat()
 	input := NewInput()
 
