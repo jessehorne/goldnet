@@ -82,7 +82,8 @@ func (s *Server) HandleConnection(conn net.Conn, handler *handlers.PacketHandler
 		for i := 0; i < 8; i++ {
 			b, err := reader.ReadByte()
 			if err != nil {
-				continue
+				handlers.ServerUserDisconnectedHandler(s.GameState, playerID, conn, nil)
+				return
 			}
 			sizeBytes = append(sizeBytes, b)
 		}
@@ -99,8 +100,8 @@ func (s *Server) HandleConnection(conn net.Conn, handler *handlers.PacketHandler
 		for i := int64(0); i < size; i++ {
 			b, err := reader.ReadByte()
 			if err != nil {
-				s.Logger.Println("packet read error:", err.Error())
-				continue
+				handlers.ServerUserDisconnectedHandler(s.GameState, playerID, conn, nil)
+				return
 			}
 			data = append(data, b)
 		}
