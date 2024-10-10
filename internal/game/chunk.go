@@ -38,6 +38,17 @@ func (c *Chunk) FillV1() {
 	}
 }
 
+func (c *Chunk) FillPerlin() {
+	for y := int64(0); y < CHUNK_H; y++ {
+		for x := int64(0); x < CHUNK_W; x++ {
+			coordsX := (c.X * CHUNK_W) + x
+			coordsY := (c.Y * CHUNK_H) + y
+			b := util.PerlinGetByteAtCoords(coordsX, coordsY)
+			c.Data[y][x] = b
+		}
+	}
+}
+
 func (c *Chunk) ToBytes() []byte {
 	var data []byte
 	data = append(data, util.Int64ToBytes(c.X)...)

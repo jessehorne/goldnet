@@ -96,7 +96,7 @@ func (gs *GameState) GetChunksAroundPlayer(p *Player) []*Chunk {
 			_, ok := gs.Chunks[y][x]
 			if !ok {
 				newChunk := NewChunk(x, y)
-				newChunk.FillV1()
+				newChunk.FillPerlin()
 				_, yExists := gs.Chunks[y]
 				if !yExists {
 					gs.Chunks[y] = map[int64]*Chunk{}

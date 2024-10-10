@@ -1,15 +1,25 @@
 package main
 
 import (
+	"github.com/jessehorne/goldnet/internal/config"
 	"github.com/jessehorne/goldnet/internal/server"
+	"github.com/jessehorne/goldnet/internal/util"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 )
 
 func main() {
-	addr := "127.0.0.1:5555"
-	s, err := server.NewServer(addr)
+	conf, err := config.NewServerConfig()
+	if err != nil {
+		log.Fatalln(err)
+		return
+	}
+
+	util.PerlinInit(conf.WorldSeed)
+
+	s, err := server.NewServer(conf)
 	if err != nil {
 		panic(err)
 	}

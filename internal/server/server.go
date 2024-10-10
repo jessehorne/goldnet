@@ -3,6 +3,7 @@ package server
 import (
 	"bufio"
 	"fmt"
+	"github.com/jessehorne/goldnet/internal/config"
 	"github.com/jessehorne/goldnet/internal/game"
 	"github.com/jessehorne/goldnet/internal/server/handlers"
 	"github.com/jessehorne/goldnet/internal/util"
@@ -20,16 +21,17 @@ type Server struct {
 	Connection chan net.Conn
 	Logger     *log.Logger
 	GameState  *game.GameState
+	Conf       *config.ServerConfig
 }
 
-func NewServer(address string) (*Server, error) {
-	listener, err := net.Listen("tcp", address)
+func NewServer(conf *config.ServerConfig) (*Server, error) {
+	listener, err := net.Listen("tcp", conf.ServerAddress)
 	if err != nil {
-		return nil, fmt.Errorf("failed to listen on address %s: %w", address, err)
+		return nil, fmt.Errorf("failed to listen on address %s: %w", conf.ServerAddress, err)
 	}
 
 	return &Server{
-		Addr:       address,
+		Conf:       conf,
 		Listener:   listener,
 		Shutdown:   make(chan struct{}),
 		Connection: make(chan net.Conn),
@@ -112,7 +114,7 @@ func (s *Server) HandleConnection(conn net.Conn, handler *handlers.PacketHandler
 }
 
 func (s *Server) Start() {
-	s.Logger.Println("server started on", s.Addr)
+	s.Logger.Println("server started on", s.Conf.ServerAddress)
 	s.WG.Add(2)
 
 	handler := handlers.NewPacketHandler(s.GameState)
