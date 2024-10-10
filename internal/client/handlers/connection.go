@@ -20,21 +20,24 @@ func ClientPlayerSelfJoinedHandler(g *gui.GUI, gs *game.GameState, conn net.Conn
 	gs.SetIntStore("playerID", playerID)
 
 	numOfPlayers := util.BytesToInt64(others[0:8])
-	counter := 8
-	for i := int64(0); i < numOfPlayers; i++ {
-		id := util.BytesToInt64(data[counter : counter+8])
-		counter += 8
-		px := util.BytesToInt64(data[counter : counter+8])
-		counter += 8
-		py := util.BytesToInt64(data[counter : counter+8])
-		counter += 8
 
-		otherPlayer := &game.Player{
-			ID: id,
-			X:  px,
-			Y:  py,
+	if numOfPlayers > 0 {
+		counter := 8
+		for i := int64(0); i < numOfPlayers; i++ {
+			id := util.BytesToInt64(others[counter : counter+8])
+			counter += 8
+			px := util.BytesToInt64(others[counter : counter+8])
+			counter += 8
+			py := util.BytesToInt64(others[counter : counter+8])
+			counter += 8
+
+			otherPlayer := &game.Player{
+				ID: id,
+				X:  px,
+				Y:  py,
+			}
+			gs.AddPlayer(otherPlayer)
 		}
-		gs.AddPlayer(otherPlayer)
 	}
 
 	g.Chat.AddMessage(util.NewSystemMessage("GAME", "You've connected to GoldNet Official. Good luck!"))

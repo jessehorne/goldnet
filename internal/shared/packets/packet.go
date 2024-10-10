@@ -6,11 +6,7 @@ const (
 	PacketUserLeave
 	PacketAction
 	PacketSendMessage
-)
-
-const (
-	// To Client
-	PacketChunks byte = iota
+	PacketChunks
 	PacketPlayerJoined
 	PacketPlayerSelfJoined
 	PacketPlayerDisconnected

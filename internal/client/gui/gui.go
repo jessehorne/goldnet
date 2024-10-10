@@ -22,14 +22,14 @@ func NewGUI(gs *game.GameState, inputFunc func(event *tcell.EventKey) *tcell.Eve
 
 	grid := tview.NewGrid().
 		SetRows(25, 8, 1).
-		SetColumns(80).
+		SetColumns(40).
 		SetBorders(true)
 
 	grid.SetInputCapture(inputFunc)
 
-	grid.AddItem(world.Root, 0, 0, 1, 80, 0, 0, true)
-	grid.AddItem(chat.Root, 1, 0, 1, 80, 0, 0, false)
-	grid.AddItem(input.Root, 2, 0, 1, 80, 0, 0, false)
+	grid.AddItem(world.Root, 0, 0, 1, 40, 0, 0, true)
+	grid.AddItem(chat.Root, 1, 0, 1, 40, 0, 0, false)
+	grid.AddItem(input.Root, 2, 0, 1, 40, 0, 0, false)
 
 	gui.World = world
 	gui.Root = grid

@@ -27,6 +27,7 @@ func ServerUserJoinHandler(gs *game.GameState, playerID int64, conn net.Conn, da
 		p.Conn.Write(packets.BuildPlayerJoinedPacket(newPlayer.ID, newPlayer.X, newPlayer.Y))
 	}
 	othersData := util.Int64ToBytes(int64(len(others)))
+
 	// add other players and their positions
 	for _, player := range others {
 		othersData = append(othersData, util.Int64ToBytes(player.ID)...)

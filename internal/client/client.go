@@ -87,6 +87,37 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 				p.OldChunkY = p.Y / 8
 			}
 			c.Conn.Write(packets.BuildUserMovePacket(sharedPackets.ActionMoveDown))
+		case 't':
+			if c.GUI.World.Focused {
+				c.GUI.World.Focused = false
+				c.GUI.Input.Focused = true
+				i := c.GUI.Input.Root.GetFormItemByLabel("> ").(*tview.InputField)
+				i.SetText("")
+				c.App.SetFocus(c.GUI.Input.Root)
+				return nil
+			}
+		}
+	} else if c.GUI.Input.Focused {
+		switch event.Key() {
+		case tcell.KeyESC:
+			c.GUI.World.Focused = true
+			c.GUI.Input.Focused = false
+			c.App.SetFocus(c.GUI.World.Root)
+			i := c.GUI.Input.Root.GetFormItemByLabel("> ").(*tview.InputField)
+			i.SetText("")
+			return event
+		case tcell.KeyEnter:
+			c.GUI.World.Focused = true
+			c.GUI.Input.Focused = false
+			c.App.SetFocus(c.GUI.World.Root)
+			i := c.GUI.Input.Root.GetFormItemByLabel("> ").(*tview.InputField)
+			msg := i.GetText()
+			i.SetText("")
+
+			if len(msg) > 0 {
+				c.Conn.Write(packets.BuildSendMessagePacket(msg))
+			}
+			return event
 		}
 	}
 	return event

@@ -23,7 +23,7 @@ func NewWorld(gs *game.GameState) *World {
 		Root:      box,
 		Focused:   true,
 		Chunks:    []*game.Chunk{},
-		OffsetX:   80,
+		OffsetX:   50,
 		OffsetY:   13,
 		GameState: gs,
 	}
@@ -58,7 +58,11 @@ func (m *World) Draw(screen tcell.Screen, x, y, width, height int) {
 	// draw players
 	for _, p := range m.GameState.Players {
 		if p != nil {
-			screen.SetContent(m.OffsetX+int(p.X), m.OffsetY+int(p.Y), '@', nil, tcell.StyleDefault.Foreground(tcell.ColorWhite))
+			bx := m.OffsetX + int(p.X)
+			by := m.OffsetY + int(p.Y)
+			if bx > 0 && bx < width && by > 0 && by < 26 {
+				screen.SetContent(bx, by, '@', nil, tcell.StyleDefault.Foreground(tcell.ColorWhite))
+			}
 		}
 	}
 }
