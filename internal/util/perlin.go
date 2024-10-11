@@ -9,12 +9,12 @@ var (
 )
 
 func PerlinInit(seed int64) {
-	perlinGen = perlin.NewPerlin(1.1, 1.5, 6, seed)
+	perlinGen = perlin.NewPerlin(1.1, 1.6, 4, seed)
 }
 
 func PerlinGetByteAtCoords(x, y int64) byte {
-	rn := perlinGen.Noise2D(float64(x)/100, float64(y)/50) + 1.0
-	formatted := rn * 3
+	rn := perlinGen.Noise2D(float64(x)/400, float64(y)/200) + 1.0
+	formatted := rn
 	b := byte(formatted)
 	return b
 }
