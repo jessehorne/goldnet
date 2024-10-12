@@ -13,6 +13,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 )
 
 type Client struct {
@@ -58,35 +59,50 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 			return event
 		}
 
+		mod := (1 / float64(p.Speed)) * 1000
+		canMoveAt := p.LastMovementTime.Add(time.Duration(mod) * time.Millisecond)
+		canMove := true
+		if time.Now().Before(canMoveAt) {
+			canMove = false
+		}
+
 		switch event.Rune() {
 		case 'a':
-			p.X--
-			c.GUI.World.OffsetX++
-			if p.OldChunkX != p.X/8 {
+			if canMove {
+				p.X--
+				c.GUI.World.OldOffsetX = c.GUI.World.OffsetX
+				c.GUI.World.OffsetX++
 				p.OldChunkX = p.X / 8
+				c.Conn.Write(packets.BuildUserMovePacket(sharedPackets.ActionMoveLeft))
+				p.LastMovementTime = time.Now()
 			}
-			c.Conn.Write(packets.BuildUserMovePacket(sharedPackets.ActionMoveLeft))
 		case 'd':
-			p.X++
-			c.GUI.World.OffsetX--
-			if p.OldChunkX != p.X/8 {
+			if canMove {
+				p.X++
+				c.GUI.World.OffsetX--
+				c.GUI.World.OldOffsetX = c.GUI.World.OffsetX
 				p.OldChunkX = p.X / 8
+				c.Conn.Write(packets.BuildUserMovePacket(sharedPackets.ActionMoveRight))
+				p.LastMovementTime = time.Now()
 			}
-			c.Conn.Write(packets.BuildUserMovePacket(sharedPackets.ActionMoveRight))
 		case 'w':
-			p.Y--
-			c.GUI.World.OffsetY++
-			if p.OldChunkY != p.Y/8 {
+			if canMove {
+				p.Y--
+				c.GUI.World.OffsetY++
+				c.GUI.World.OldOffsetY = c.GUI.World.OffsetY
 				p.OldChunkY = p.Y / 8
+				c.Conn.Write(packets.BuildUserMovePacket(sharedPackets.ActionMoveUp))
+				p.LastMovementTime = time.Now()
 			}
-			c.Conn.Write(packets.BuildUserMovePacket(sharedPackets.ActionMoveUp))
 		case 's':
-			p.Y++
-			c.GUI.World.OffsetY--
-			if p.OldChunkY != p.Y/8 {
+			if canMove {
+				p.Y++
+				c.GUI.World.OffsetY--
+				c.GUI.World.OldOffsetY = c.GUI.World.OffsetY
 				p.OldChunkY = p.Y / 8
+				c.Conn.Write(packets.BuildUserMovePacket(sharedPackets.ActionMoveDown))
+				p.LastMovementTime = time.Now()
 			}
-			c.Conn.Write(packets.BuildUserMovePacket(sharedPackets.ActionMoveDown))
 		case 't':
 			if c.GUI.World.Focused {
 				c.GUI.World.Focused = false

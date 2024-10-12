@@ -76,6 +76,8 @@ func (gs *GameState) MovePlayer(playerID, x, y int64) {
 	if p != nil {
 		p.X = x
 		p.Y = y
+		p.OldChunkX = p.X / CHUNK_W
+		p.OldChunkY = p.Y / CHUNK_H
 	}
 }
 
@@ -124,7 +126,8 @@ func (gs *GameState) GetPlayersAroundPlayer(p *Player) []*Player {
 			continue
 		}
 
-		if util.Distance(p.X, p.Y, otherPlayer.X, otherPlayer.Y) < 10 {
+		dis := util.Distance(p.X, p.Y, otherPlayer.X, otherPlayer.Y)
+		if dis < 50 {
 			players = append(players, otherPlayer)
 		}
 	}

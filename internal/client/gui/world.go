@@ -8,13 +8,15 @@ import (
 )
 
 type World struct {
-	Root      *tview.Box
-	Focused   bool
-	Chunks    []*game.Chunk
-	OffsetX   int
-	OffsetY   int
-	Mutex     sync.Mutex
-	GameState *game.GameState
+	Root       *tview.Box
+	Focused    bool
+	Chunks     []*game.Chunk
+	OffsetX    int
+	OffsetY    int
+	OldOffsetX int
+	OldOffsetY int
+	Mutex      sync.Mutex
+	GameState  *game.GameState
 }
 
 func NewWorld(gs *game.GameState) *World {
