@@ -49,8 +49,8 @@ func (m *World) Draw(screen tcell.Screen, x, y, width, height int) {
 				bx := m.OffsetX + int(startX+xx)
 				by := m.OffsetY + int(startY+yy)
 				if bx > 0 && bx < width && by > 0 && by < 26 {
-					b := c.Data[yy][xx]
-					screen.SetContent(bx, by, ' ', nil, GetTerrainBlock(b))
+					b := c.Below[yy][xx]
+					screen.SetContent(bx, by, GetTerrainAbove(c.Above[yy][xx]), nil, GetTerrainBlock(b))
 				}
 			}
 		}

@@ -9,17 +9,24 @@ const (
 	CHUNK_H int64 = 8
 )
 
+const (
+	AboveNothing byte = iota
+	AboveTree
+)
+
 type Chunk struct {
-	X    int64
-	Y    int64
-	Data [CHUNK_H][CHUNK_W]byte
+	X     int64
+	Y     int64
+	Below [CHUNK_H][CHUNK_W]byte
+	Above [CHUNK_H][CHUNK_W]byte
 }
 
 func NewChunk(x, y int64) *Chunk {
 	return &Chunk{
-		X:    x,
-		Y:    y,
-		Data: [CHUNK_H][CHUNK_W]byte{},
+		X:     x,
+		Y:     y,
+		Below: [CHUNK_H][CHUNK_W]byte{},
+		Above: [CHUNK_H][CHUNK_W]byte{},
 	}
 }
 
@@ -33,7 +40,7 @@ func (c *Chunk) FillV1() {
 			} else {
 				block = ' '
 			}
-			c.Data[y][x] = block
+			c.Below[y][x] = block
 		}
 	}
 }
@@ -43,8 +50,16 @@ func (c *Chunk) FillPerlin() {
 		for x := int64(0); x < CHUNK_W; x++ {
 			coordsX := (c.X * CHUNK_W) + x
 			coordsY := (c.Y * CHUNK_H) + y
-			b := util.PerlinGetByteAtCoords(coordsX, coordsY)
-			c.Data[y][x] = b
+			below := util.PerlinGetDataAtCoords(coordsX, coordsY)
+			if below > 150 && below < 220 {
+				haveTree := util.RandomIntBetween(0, 8)
+				if haveTree == 1 {
+					c.Above[y][x] = AboveTree
+				} else {
+					c.Above[y][x] = AboveNothing
+				}
+			}
+			c.Below[y][x] = below
 		}
 	}
 }
@@ -55,7 +70,12 @@ func (c *Chunk) ToBytes() []byte {
 	data = append(data, util.Int64ToBytes(c.Y)...)
 	for y := int64(0); y < CHUNK_H; y++ {
 		for x := int64(0); x < CHUNK_W; x++ {
-			data = append(data, c.Data[y][x])
+			data = append(data, c.Below[y][x])
+		}
+	}
+	for y := int64(0); y < CHUNK_H; y++ {
+		for x := int64(0); x < CHUNK_W; x++ {
+			data = append(data, c.Above[y][x])
 		}
 	}
 	return data
@@ -71,22 +91,26 @@ func ParseChunksFromBytes(data []byte) []*Chunk {
 		chunkY := util.BytesToInt64(data[counter : counter+8])
 		counter += 8
 		chunkBytes := [CHUNK_H][CHUNK_W]byte{}
+		chunkAboveBytes := [CHUNK_H][CHUNK_W]byte{}
 		for y := int64(0); y < CHUNK_H; y++ {
 			for x := int64(0); x < CHUNK_W; x++ {
 				chunkBytes[y][x] = data[counter]
 				counter++
 			}
 		}
+		for y := int64(0); y < CHUNK_H; y++ {
+			for x := int64(0); x < CHUNK_W; x++ {
+				chunkAboveBytes[y][x] = data[counter]
+				counter++
+			}
+		}
 		newChunk := &Chunk{
-			X:    chunkX,
-			Y:    chunkY,
-			Data: chunkBytes,
+			X:     chunkX,
+			Y:     chunkY,
+			Below: chunkBytes,
+			Above: chunkAboveBytes,
 		}
 		chunks = append(chunks, newChunk)
 	}
 	return chunks
-}
-
-func GetChunkFromCoords(x, y int64) (int64, int64) {
-	return x / CHUNK_W, y / CHUNK_H
 }
