@@ -1,4 +1,4 @@
-package gui
+package shared
 
 import (
 	"github.com/gdamore/tcell/v2"
@@ -54,4 +54,16 @@ func GetTerrainAbove(d byte) rune {
 		return Above[d]
 	}
 	return Above[game.AboveNothing]
+}
+
+func GetTerrainBelow(d byte) byte {
+	var b byte
+	if d < 80 {
+		b = TerrainWater
+	} else if d < 100 {
+		b = TerrainSand
+	} else {
+		b = TerrainGrass
+	}
+	return b
 }

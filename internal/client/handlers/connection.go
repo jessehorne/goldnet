@@ -15,7 +15,7 @@ func ClientPlayerSelfJoinedHandler(g *gui.GUI, gs *game.GameState, conn net.Conn
 		X:      x,
 		Y:      y,
 		Sprite: '@',
-		Speed:  5,
+		Speed:  10,
 	}
 	gs.AddPlayer(p)
 	gs.SetIntStore("playerID", playerID)

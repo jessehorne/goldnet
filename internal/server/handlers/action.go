@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/jessehorne/goldnet/internal/game"
+	"github.com/jessehorne/goldnet/internal/shared"
 	"github.com/jessehorne/goldnet/internal/shared/packets"
 	"net"
 	"time"
@@ -17,6 +18,12 @@ func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data
 
 	if packets.IsMovementAction(action) {
 		mod := (1 / float64(p.Speed)) * 1000
+
+		b := gs.GetBelowBlockAtCoords(p.X, p.Y)
+		if shared.GetTerrainBelow(b) == shared.TerrainWater {
+			mod = mod * 4
+		}
+
 		canMoveAt := p.LastMovementTime.Add(time.Duration(mod) * time.Millisecond)
 		canMove := true
 		if time.Now().Before(canMoveAt) {

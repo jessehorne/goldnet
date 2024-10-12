@@ -7,6 +7,7 @@ import (
 	"github.com/jessehorne/goldnet/internal/client/handlers"
 	"github.com/jessehorne/goldnet/internal/client/packets"
 	"github.com/jessehorne/goldnet/internal/game"
+	"github.com/jessehorne/goldnet/internal/shared"
 	sharedPackets "github.com/jessehorne/goldnet/internal/shared/packets"
 	"github.com/jessehorne/goldnet/internal/util"
 	"github.com/rivo/tview"
@@ -60,6 +61,12 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 		}
 
 		mod := (1 / float64(p.Speed)) * 1000
+
+		b := c.GameState.GetBelowBlockAtCoords(p.X, p.Y)
+		if shared.GetTerrainBelow(b) == shared.TerrainWater {
+			mod = mod * 4
+		}
+
 		canMoveAt := p.LastMovementTime.Add(time.Duration(mod) * time.Millisecond)
 		canMove := true
 		if time.Now().Before(canMoveAt) {

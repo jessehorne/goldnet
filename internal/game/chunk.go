@@ -114,3 +114,23 @@ func ParseChunksFromBytes(data []byte) []*Chunk {
 	}
 	return chunks
 }
+
+func (c *Chunk) GetBelowBlock(x, y int64) byte {
+	if y > int64(len(c.Below)-1) {
+		return 0
+	}
+	if x > int64(len(c.Below[y])-1) {
+		return 0
+	}
+	return c.Below[y][x]
+}
+
+func (c *Chunk) GetAboveBlock(x, y int64) byte {
+	if y > int64(len(c.Below)-1) {
+		return 0
+	}
+	if x > int64(len(c.Below[y])-1) {
+		return 0
+	}
+	return c.Above[y][x]
+}

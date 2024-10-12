@@ -3,6 +3,7 @@ package gui
 import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/jessehorne/goldnet/internal/game"
+	"github.com/jessehorne/goldnet/internal/shared"
 	"github.com/rivo/tview"
 	"sync"
 )
@@ -52,7 +53,7 @@ func (m *World) Draw(screen tcell.Screen, x, y, width, height int) {
 				by := m.OffsetY + int(startY+yy)
 				if bx > 0 && bx < width && by > 0 && by < 26 {
 					b := c.Below[yy][xx]
-					screen.SetContent(bx, by, GetTerrainAbove(c.Above[yy][xx]), nil, GetTerrainBlock(b))
+					screen.SetContent(bx, by, shared.GetTerrainAbove(c.Above[yy][xx]), nil, shared.GetTerrainBlock(b))
 				}
 			}
 		}

@@ -89,6 +89,42 @@ func (gs *GameState) HandlePlayerAction(player *Player, action byte) {
 	}
 }
 
+func (gs *GameState) GetChunkAtCoords(x, y int64) *Chunk {
+	cX := x / 8
+	cY := y / 8
+	c, ok := gs.Chunks[cY][cX]
+	if !ok {
+		return nil
+	}
+	return c
+}
+
+func (gs *GameState) GetBelowBlockAtCoords(x, y int64) byte {
+	c := gs.GetChunkAtCoords(x, y)
+	if c == nil {
+		return 0
+	}
+	modX := x % 8
+	modY := y % 8
+	if modX < 0 {
+		modX = 8 - -(modX)
+	}
+	if modY < 0 {
+		modY = 8 - -(modY)
+	}
+	return c.GetBelowBlock(modX, modY)
+}
+
+func (gs *GameState) GetAboveBlockAtCoords(x, y int64) byte {
+	c := gs.GetChunkAtCoords(x, y)
+	if c == nil {
+		return 0
+	}
+	modX := x - (x / 8)
+	modY := y - (y / 8)
+	return c.GetAboveBlock(modX, modY)
+}
+
 func (gs *GameState) GetChunksAroundPlayer(p *Player) []*Chunk {
 	gs.Mutex.Lock()
 	defer gs.Mutex.Unlock()

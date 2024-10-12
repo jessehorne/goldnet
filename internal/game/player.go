@@ -29,7 +29,7 @@ func NewPlayer(id, x, y int64, c net.Conn) *Player {
 		Health:           255,
 		Inventory:        []InventoryItem{},
 		Conn:             c,
-		Speed:            5,
+		Speed:            10,
 		LastMovementTime: time.Now(),
 	}
 }
