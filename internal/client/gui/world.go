@@ -50,7 +50,7 @@ func (m *World) Draw(screen tcell.Screen, x, y, width, height int) {
 				by := m.OffsetY + int(startY+yy)
 				if bx > 0 && bx < width && by > 0 && by < 26 {
 					b := c.Data[yy][xx]
-					screen.SetContent(bx, by, ' ', nil, Terrain[b])
+					screen.SetContent(bx, by, ' ', nil, GetTerrainBlock(b))
 				}
 			}
 		}
