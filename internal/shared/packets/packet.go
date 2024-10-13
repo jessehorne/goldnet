@@ -11,6 +11,7 @@ const (
 	PacketPlayerSelfJoined
 	PacketPlayerDisconnected
 	PacketPlayerMoved
+	PacketUpdateSelfPlayer
 )
 
 const (
