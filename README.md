@@ -1,7 +1,7 @@
 GoldNet
 ===
 
-A real-time survival ASCII MMO experiment written in Go.
+A multiplayer CLI survival game written in Go.
 
 more coming soon...
 
