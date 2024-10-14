@@ -8,7 +8,6 @@ import (
 )
 
 func ClientUpdateSelfPlayerHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []byte) {
-	g.Chat.AddMessage("test")
 	playerID, ok := gs.GetIntStore("playerID")
 	if !ok {
 		return
@@ -18,6 +17,7 @@ func ClientUpdateSelfPlayerHandler(g *gui.GUI, gs *game.GameState, conn net.Conn
 	updatePlayer := packets.ParsePlayerBytes(data)
 	p.X = updatePlayer.X
 	p.Y = updatePlayer.Y
+	p.Gold = updatePlayer.Gold
 	p.HP = updatePlayer.HP
 	p.ST = updatePlayer.ST
 
@@ -25,5 +25,5 @@ func ClientUpdateSelfPlayerHandler(g *gui.GUI, gs *game.GameState, conn net.Conn
 	g.World.OffsetX = 50 + -int(p.X)
 	g.World.OffsetY = 13 + -int(p.Y)
 
-	g.Chat.AddMessage("moved")
+	g.Sidebar.UpdateText()
 }

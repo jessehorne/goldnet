@@ -14,6 +14,7 @@ type Sidebar struct {
 func NewSidebar() *Sidebar {
 	tv := tview.NewTextView()
 	tv.SetBorder(false)
+	tv.SetDynamicColors(true)
 	return &Sidebar{
 		Root: tv,
 	}
@@ -25,18 +26,25 @@ func (s *Sidebar) AttachPlayer(p *game.Player) {
 
 func (s *Sidebar) UpdateText() {
 	tmpl := `
-%s
+Player Name: %s
 
-HP: %d
-ST: %d
-
+[yellow]Gold: %d
+[green]HP: %s%d
+[blue]ST: %d
+[white]
 Inventory
 ---------
 
 coming soon...
 `
+	var lowHealthText string
+	if s.Player.HP < 30 {
+		lowHealthText = "[red]"
+	}
 	s.Root.SetText(fmt.Sprintf(tmpl,
 		s.Player.Username,
+		s.Player.Gold,
+		lowHealthText,
 		s.Player.HP,
 		s.Player.ST,
 	))

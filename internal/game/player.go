@@ -14,13 +14,13 @@ type Player struct {
 	OldChunkX        int64
 	OldChunkY        int64
 	Sprite           rune
-	Health           byte
 	Inventory        []InventoryItem
 	Conn             net.Conn
 	Speed            byte // how many blocks per second the player can travel (water speed is Speed/2)
 	LastMovementTime time.Time
 
 	Username string
+	Gold     int64
 	HP       int64
 	ST       int64
 }
@@ -31,14 +31,15 @@ func NewPlayer(id, x, y int64, c net.Conn) *Player {
 		X:                x,
 		Y:                y,
 		Sprite:           '@',
-		Health:           255,
 		Inventory:        []InventoryItem{},
 		Conn:             c,
-		Speed:            10,
 		LastMovementTime: time.Now(),
 
-		HP: 10,
-		ST: 2,
+		Username: "bob",
+		Gold:     0,
+		HP:       10,
+		ST:       2,
+		Speed:    10,
 	}
 }
 
@@ -52,7 +53,8 @@ func (p *Player) ToBytes() []byte {
 	// Add X and Y coordinates
 	data = append(data, util.Int64ToBytes(p.X)...)
 	data = append(data, util.Int64ToBytes(p.Y)...)
-	// add HP and ST
+	// add Gold, HP and ST
+	data = append(data, util.Int64ToBytes(p.Gold)...)
 	data = append(data, util.Int64ToBytes(p.HP)...)
 	data = append(data, util.Int64ToBytes(p.ST)...)
 

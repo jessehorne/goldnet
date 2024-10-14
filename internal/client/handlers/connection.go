@@ -10,15 +10,11 @@ import (
 
 func ClientPlayerSelfJoinedHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []byte) {
 	playerID, x, y, others := packets.ParsePlayerSelfJoinedPacket(data)
-	p := &game.Player{
-		ID:     playerID,
-		X:      x,
-		Y:      y,
-		Sprite: '@',
-		Speed:  10,
-	}
+	p := game.NewPlayer(playerID, x, y, nil)
 	gs.AddPlayer(p)
 	gs.SetIntStore("playerID", playerID)
+	g.Sidebar.AttachPlayer(p)
+	g.Sidebar.UpdateText()
 
 	numOfPlayers := util.BytesToInt64(others[0:8])
 
