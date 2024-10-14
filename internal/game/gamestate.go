@@ -8,19 +8,21 @@ import (
 )
 
 type GameState struct {
-	Players  map[int64]*Player
-	Mutex    sync.Mutex
-	Logger   *log.Logger
-	Chunks   map[int64]map[int64]*Chunk
-	IntStore map[string]int64
+	Players     map[int64]*Player
+	PlayerCount int64
+	Mutex       sync.Mutex
+	Logger      *log.Logger
+	Chunks      map[int64]map[int64]*Chunk
+	IntStore    map[string]int64
 }
 
 func NewGameState() *GameState {
 	return &GameState{
-		Logger:   log.New(os.Stdout, "[GoldNet] (GameState) ", log.Ldate|log.Ltime),
-		Players:  map[int64]*Player{},
-		Chunks:   map[int64]map[int64]*Chunk{},
-		IntStore: map[string]int64{},
+		Logger:      log.New(os.Stdout, "[GoldNet] (GameState) ", log.Ldate|log.Ltime),
+		Players:     map[int64]*Player{},
+		PlayerCount: 0,
+		Chunks:      map[int64]map[int64]*Chunk{},
+		IntStore:    map[string]int64{},
 	}
 }
 

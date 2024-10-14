@@ -9,15 +9,10 @@ import (
 
 func ClientPlayerMovedHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []byte) {
 	id, x, y := packets.ParseMovePacket(data)
-	//playerID, _ := gs.GetIntStore("playerID")
+	playerID, _ := gs.GetIntStore("playerID")
 	gs.MovePlayer(id, x, y)
-	g.World.OffsetX = 50 + -int(x)
-	g.World.OffsetY = 13 + -int(y)
-	//if playerID == id {
-	//	p := gs.GetPlayer(playerID)
-	//	if p != nil {
-	//		nearbyChunks := gs.GetChunksAroundPlayer(p)
-	//		g.World.UpdateChunks(nearbyChunks)
-	//	}
-	//}
+	if playerID == id {
+		g.World.OffsetX = 50 + -int(x)
+		g.World.OffsetY = 13 + -int(y)
+	}
 }
