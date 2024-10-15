@@ -14,6 +14,11 @@ func ServerUserJoinHandler(gs *game.GameState, playerID int64, conn net.Conn, da
 	newPlayer := game.NewPlayer(playerID, 0, 0, conn)
 	gs.AddPlayer(newPlayer)
 
+	// send zombies to player
+	for _, z := range gs.Zombies {
+		newPlayer.Conn.Write(packets.BuildNewZombiePacket(z.ToBytes()))
+	}
+
 	// let every player know they joined
 	others := []*game.Player{}
 	for _, p := range gs.Players {
@@ -40,7 +45,7 @@ func ServerUserJoinHandler(gs *game.GameState, playerID int64, conn net.Conn, da
 	conn.Write(packets.BuildPlayerSelfJoinedPacket(playerID, 0, 0, othersData))
 
 	// send nearby chunks to player
-	nearbyChunks := gs.GetChunksAroundPlayer(newPlayer)
+	nearbyChunks, _ := gs.GetChunksAroundPlayer(newPlayer)
 	var chunkData []byte
 	for _, c := range nearbyChunks {
 		chunkData = append(chunkData, c.ToBytes()...)

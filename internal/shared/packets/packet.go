@@ -1,7 +1,6 @@
 package packets
 
 const (
-	// From Client
 	PacketUserJoin byte = iota
 	PacketUserLeave
 	PacketAction
@@ -12,6 +11,8 @@ const (
 	PacketPlayerDisconnected
 	PacketPlayerMoved
 	PacketUpdateSelfPlayer
+	PacketNewZombie
+	PacketUpdateZombie
 )
 
 const (

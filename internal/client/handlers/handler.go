@@ -25,6 +25,8 @@ func NewPacketHandler(gs *game.GameState) *PacketHandler {
 			packets.PacketChunks:             ClientChunksHandler,
 			packets.PacketSendMessage:        ClientMessageHandler,
 			packets.PacketUpdateSelfPlayer:   ClientUpdateSelfPlayerHandler,
+			packets.PacketNewZombie:          ClientNewZombieHandler,
+			packets.PacketUpdateZombie:       ClientUpdateZombieHandler,
 		},
 	}
 }
