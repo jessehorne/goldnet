@@ -221,12 +221,12 @@ func (gs *GameState) RunGameLoop() {
 						direction := util.RandomIntBetween(0, 2)
 						if direction == 0 {
 							xDist := followingPlayer.X - z.X
-							if math.Abs(float64(xDist)) > 0.0 {
+							if xDist*xDist > 0 { // Just checking for positive magnitude
 								z.X += xDist / int64(math.Abs(float64(xDist)))
 							}
 						} else {
 							yDist := followingPlayer.Y - z.Y
-							if math.Abs(float64(yDist)) > 0 {
+							if yDist*yDist > 0 { // Just checking for positive magnitude
 								z.Y += yDist / int64(math.Abs(float64(yDist)))
 							}
 						}
