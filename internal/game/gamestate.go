@@ -216,6 +216,9 @@ func (gs *GameState) RunGameLoop() {
 				// If we are now following a player, move towards it
 				if z.FollowingPlayerId != -1 {
 					followingPlayer := gs.Players[z.FollowingPlayerId]
+					if z == nil || followingPlayer == nil {
+						continue
+					}
 					// Follow player if close enough
 					if util.Distance(z.X, z.Y, followingPlayer.X, followingPlayer.Y) < ZOMBIE_FOLLOW_RANGE {
 						direction := util.RandomIntBetween(0, 2)

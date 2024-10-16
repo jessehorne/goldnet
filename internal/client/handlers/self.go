@@ -27,5 +27,5 @@ func ClientUpdateSelfPlayerHandler(g *gui.GUI, gs *game.GameState, conn net.Conn
 	g.World.OffsetX = 50 + -int(p.X)
 	g.World.OffsetY = 13 + -int(p.Y)
 
-	g.Sidebar.UpdateText()
+	g.Sidebar.UpdatePlayerStats(p)
 }
