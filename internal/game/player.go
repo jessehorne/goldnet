@@ -1,10 +1,11 @@
 package game
 
 import (
-	"github.com/jessehorne/goldnet/internal/shared/packets"
-	"github.com/jessehorne/goldnet/internal/util"
 	"net"
 	"time"
+
+	"github.com/jessehorne/goldnet/internal/shared/packets"
+	"github.com/jessehorne/goldnet/internal/util"
 )
 
 type Player struct {
@@ -16,13 +17,16 @@ type Player struct {
 	Sprite           rune
 	Inventory        []InventoryItem
 	Conn             net.Conn
-	Speed            byte // how many blocks per second the player can travel (water speed is Speed/2)
 	LastMovementTime time.Time
 
-	Username string
-	Gold     int64
-	HP       int64
-	ST       int64
+	Username    string
+	Gold        int64
+	HP          int64
+	ST          int64
+	Speed       byte // how many blocks per second the player can travel (water speed is Speed/2)
+	AttackSpeed int64
+
+	Hostile bool
 }
 
 func NewPlayer(id, x, y int64, c net.Conn) *Player {
@@ -35,11 +39,14 @@ func NewPlayer(id, x, y int64, c net.Conn) *Player {
 		Conn:             c,
 		LastMovementTime: time.Now(),
 
-		Username: "bob",
-		Gold:     0,
-		HP:       10,
-		ST:       2,
-		Speed:    10,
+		Username:    "bob",
+		Gold:        0,
+		HP:          10,
+		ST:          2,
+		Speed:       10,
+		AttackSpeed: 1,
+
+		Hostile: false,
 	}
 }
 
@@ -57,6 +64,13 @@ func (p *Player) ToBytes() []byte {
 	data = append(data, util.Int64ToBytes(p.Gold)...)
 	data = append(data, util.Int64ToBytes(p.HP)...)
 	data = append(data, util.Int64ToBytes(p.ST)...)
+
+	// Add hostile flag
+	if p.Hostile {
+		data = append(data, util.Int64ToBytes(1)...)
+	} else {
+		data = append(data, util.Int64ToBytes(0)...)
+	}
 
 	return data
 }

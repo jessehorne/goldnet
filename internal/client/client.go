@@ -2,6 +2,11 @@ package client
 
 import (
 	"bufio"
+	"log"
+	"net"
+	"os"
+	"time"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/jessehorne/goldnet/internal/client/gui"
 	"github.com/jessehorne/goldnet/internal/client/handlers"
@@ -11,10 +16,6 @@ import (
 	sharedPackets "github.com/jessehorne/goldnet/internal/shared/packets"
 	"github.com/jessehorne/goldnet/internal/util"
 	"github.com/rivo/tview"
-	"log"
-	"net"
-	"os"
-	"time"
 )
 
 type Client struct {
@@ -110,6 +111,8 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 				c.Conn.Write(packets.BuildUserMovePacket(sharedPackets.ActionMoveDown))
 				p.LastMovementTime = time.Now()
 			}
+		case 'e':
+			c.Conn.Write(packets.BuildUserToggleHostilePacket(p.Hostile))
 		case 't':
 			if c.GUI.World.Focused {
 				c.GUI.World.Focused = false

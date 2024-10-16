@@ -25,6 +25,8 @@ func ParsePlayerBytes(data []byte) *game.Player {
 	counter += 8
 	st := util.BytesToInt64(data[counter : counter+8])
 	counter += 8
+	hostileInt := util.BytesToInt64(data[counter : counter+8])
+	counter += 8
 
 	return &game.Player{
 		Username: username,
@@ -33,5 +35,6 @@ func ParsePlayerBytes(data []byte) *game.Player {
 		Gold:     gold,
 		HP:       hp,
 		ST:       st,
+		Hostile:  hostileInt == 1,
 	}
 }

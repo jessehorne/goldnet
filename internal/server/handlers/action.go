@@ -18,6 +18,14 @@ func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data
 		return
 	}
 
+	if action == packets.ActionToggleHostile {
+		p.Hostile = !p.Hostile
+		for _, player := range gs.Players {
+			setHostilePacket := packets.BuildSetHostilePacket(p.ID, p.Hostile)
+			player.Conn.Write(setHostilePacket)
+		}
+	}
+
 	if packets.IsMovementAction(action) {
 		mod := (1 / float64(p.Speed)) * 1000
 

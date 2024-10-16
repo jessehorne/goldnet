@@ -10,6 +10,7 @@ const (
 	PacketPlayerSelfJoined
 	PacketPlayerDisconnected
 	PacketPlayerMoved
+	PacketPlayerToggleHostile
 	PacketUpdateSelfPlayer
 	PacketUpdateZombie
 )
@@ -20,6 +21,7 @@ const (
 	ActionMoveDown
 	ActionMoveLeft
 	ActionMoveRight
+	ActionToggleHostile
 )
 
 var (

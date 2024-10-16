@@ -1,10 +1,11 @@
 package handlers
 
 import (
+	"net"
+
 	"github.com/jessehorne/goldnet/internal/client/gui"
 	"github.com/jessehorne/goldnet/internal/client/packets"
 	"github.com/jessehorne/goldnet/internal/game"
-	"net"
 )
 
 func ClientUpdateSelfPlayerHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []byte) {
@@ -20,6 +21,7 @@ func ClientUpdateSelfPlayerHandler(g *gui.GUI, gs *game.GameState, conn net.Conn
 	p.Gold = updatePlayer.Gold
 	p.HP = updatePlayer.HP
 	p.ST = updatePlayer.ST
+	p.Hostile = updatePlayer.Hostile
 
 	gs.MovePlayer(p.ID, p.X, p.Y)
 	g.World.OffsetX = 50 + -int(p.X)
