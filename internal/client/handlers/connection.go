@@ -13,8 +13,7 @@ func ClientPlayerSelfJoinedHandler(g *gui.GUI, gs *game.GameState, conn net.Conn
 	p := game.NewPlayer(playerID, x, y, nil)
 	gs.AddPlayer(p)
 	gs.SetIntStore("playerID", playerID)
-	g.Sidebar.AttachPlayer(p)
-	g.Sidebar.UpdateText()
+	g.Sidebar.UpdatePlayerStats(p)
 
 	numOfPlayers := util.BytesToInt64(others[0:8])
 
