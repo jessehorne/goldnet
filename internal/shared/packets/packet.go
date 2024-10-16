@@ -11,7 +11,6 @@ const (
 	PacketPlayerDisconnected
 	PacketPlayerMoved
 	PacketUpdateSelfPlayer
-	PacketNewZombie
 	PacketUpdateZombie
 )
 

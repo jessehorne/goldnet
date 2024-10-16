@@ -1,12 +1,14 @@
 package game
 
 import (
-	"github.com/jessehorne/goldnet/internal/shared/packets"
-	"github.com/jessehorne/goldnet/internal/util"
 	"log"
+	"math"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/jessehorne/goldnet/internal/shared/packets"
+	"github.com/jessehorne/goldnet/internal/util"
 )
 
 type GameState struct {
@@ -202,19 +204,46 @@ func (gs *GameState) RunGameLoop() {
 			// handle movement
 			doesMove := util.RandomIntBetween(0, 10) < 2
 			if doesMove {
-				// move towards player if one is close by
-				// TODO
+				// If not currently following a player, pick one
+				if z.FollowingPlayerId == -1 {
+					for _, player := range gs.Players {
+						if util.Distance(z.X, z.Y, player.X, player.Y) < ZOMBIE_FOLLOW_RANGE {
+							z.FollowingPlayerId = player.ID
+						}
+					}
+				}
 
-				// otherwise randomly move
-				randomDirection := util.RandomIntBetween(0, 4)
-				if randomDirection == 0 {
-					z.Y--
-				} else if randomDirection == 1 {
-					z.Y++
-				} else if randomDirection == 2 {
-					z.X--
-				} else if randomDirection == 3 {
-					z.X++
+				// If we are now following a player, move towards it
+				if z.FollowingPlayerId != -1 {
+					followingPlayer := gs.Players[z.FollowingPlayerId]
+					// Follow player if close enough
+					if util.Distance(z.X, z.Y, followingPlayer.X, followingPlayer.Y) < ZOMBIE_FOLLOW_RANGE {
+						direction := util.RandomIntBetween(0, 2)
+						if direction == 0 {
+							xDist := followingPlayer.X - z.X
+							if xDist*xDist > 0 { // Just checking for positive magnitude
+								z.X += xDist / int64(math.Abs(float64(xDist)))
+							}
+						} else {
+							yDist := followingPlayer.Y - z.Y
+							if yDist*yDist > 0 { // Just checking for positive magnitude
+								z.Y += yDist / int64(math.Abs(float64(yDist)))
+							}
+						}
+					} else { // Lose track of the player if it is too far
+						z.FollowingPlayerId = -1
+					}
+				} else { // otherwise randomly move
+					randomDirection := util.RandomIntBetween(0, 4)
+					if randomDirection == 0 {
+						z.Y--
+					} else if randomDirection == 1 {
+						z.Y++
+					} else if randomDirection == 2 {
+						z.X--
+					} else if randomDirection == 3 {
+						z.X++
+					}
 				}
 
 				// send zombie updates to all players

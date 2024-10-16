@@ -1,12 +1,13 @@
 package handlers
 
 import (
+	"net"
+	"time"
+
 	"github.com/jessehorne/goldnet/internal/game"
 	"github.com/jessehorne/goldnet/internal/shared"
 	"github.com/jessehorne/goldnet/internal/shared/packets"
 	"github.com/jessehorne/goldnet/internal/util"
-	"net"
-	"time"
 )
 
 func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data []byte) {
@@ -67,7 +68,7 @@ func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data
 
 					// send new zombie to all players
 					zombieBytes := newZombie.ToBytes()
-					newZombiePacket := packets.BuildNewZombiePacket(zombieBytes)
+					newZombiePacket := packets.BuildUpdateZombiePacket(zombieBytes)
 					for _, otherPlayer := range gs.Players {
 						otherPlayer.Conn.Write(newZombiePacket)
 					}
