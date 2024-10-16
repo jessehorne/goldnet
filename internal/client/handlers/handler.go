@@ -1,10 +1,11 @@
 package handlers
 
 import (
+	"net"
+
 	"github.com/jessehorne/goldnet/internal/client/gui"
 	"github.com/jessehorne/goldnet/internal/game"
 	"github.com/jessehorne/goldnet/internal/shared/packets"
-	"net"
 )
 
 type Handler func(g *gui.GUI, gs *game.GameState, conn net.Conn, p []byte)
@@ -25,6 +26,7 @@ func NewPacketHandler(gs *game.GameState) *PacketHandler {
 			packets.PacketChunks:             ClientChunksHandler,
 			packets.PacketSendMessage:        ClientMessageHandler,
 			packets.PacketUpdateSelfPlayer:   ClientUpdateSelfPlayerHandler,
+			packets.PacketUpdateZombie:       ClientUpdateZombieHandler,
 		},
 	}
 }

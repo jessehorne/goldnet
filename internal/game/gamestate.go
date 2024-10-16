@@ -1,28 +1,36 @@
 package game
 
 import (
-	"github.com/jessehorne/goldnet/internal/util"
 	"log"
+	"math"
 	"os"
 	"sync"
+	"time"
+
+	"github.com/jessehorne/goldnet/internal/shared/packets"
+	"github.com/jessehorne/goldnet/internal/util"
 )
 
 type GameState struct {
 	Players     map[int64]*Player
+	Zombies     map[int64]*Zombie
 	PlayerCount int64
 	Mutex       sync.Mutex
 	Logger      *log.Logger
 	Chunks      map[int64]map[int64]*Chunk
 	IntStore    map[string]int64
+	TPS         int // ticks per second
 }
 
 func NewGameState() *GameState {
 	return &GameState{
 		Logger:      log.New(os.Stdout, "[GoldNet] (GameState) ", log.Ldate|log.Ltime),
 		Players:     map[int64]*Player{},
+		Zombies:     map[int64]*Zombie{},
 		PlayerCount: 0,
 		Chunks:      map[int64]map[int64]*Chunk{},
 		IntStore:    map[string]int64{},
+		TPS:         10, // ticks per second
 	}
 }
 
@@ -127,10 +135,11 @@ func (gs *GameState) GetAboveBlockAtCoords(x, y int64) byte {
 	return c.GetAboveBlock(modX, modY)
 }
 
-func (gs *GameState) GetChunksAroundPlayer(p *Player) []*Chunk {
+func (gs *GameState) GetChunksAroundPlayer(p *Player) ([]*Chunk, []*Chunk) {
 	gs.Mutex.Lock()
 	defer gs.Mutex.Unlock()
 	var chunks []*Chunk
+	var newChunks []*Chunk
 	for y := p.OldChunkY - 3; y < p.OldChunkY+3; y++ {
 		for x := p.OldChunkX - 11; x < p.OldChunkX+10; x++ {
 			_, ok := gs.Chunks[y][x]
@@ -142,11 +151,12 @@ func (gs *GameState) GetChunksAroundPlayer(p *Player) []*Chunk {
 					gs.Chunks[y] = map[int64]*Chunk{}
 				}
 				gs.Chunks[y][x] = newChunk
+				newChunks = append(newChunks, newChunk)
 			}
 			chunks = append(chunks, gs.Chunks[y][x])
 		}
 	}
-	return chunks
+	return chunks, newChunks
 }
 
 func (gs *GameState) GetPlayersAroundPlayer(p *Player) []*Player {
@@ -181,5 +191,70 @@ func (gs *GameState) AddChunks(chunks []*Chunk) {
 			gs.Chunks[c.Y] = map[int64]*Chunk{}
 		}
 		gs.Chunks[c.Y][c.X] = c
+	}
+}
+
+func (gs *GameState) RunGameLoop() {
+	for {
+		dt := time.Duration((1.0 / float64(gs.TPS)) * 1000)
+
+		// update zombie
+		gs.Mutex.Lock()
+		for _, z := range gs.Zombies {
+			// handle movement
+			doesMove := util.RandomIntBetween(0, 10) < 2
+			if doesMove {
+				// If not currently following a player, pick one
+				if z.FollowingPlayerId == -1 {
+					for _, player := range gs.Players {
+						if util.Distance(z.X, z.Y, player.X, player.Y) < ZOMBIE_FOLLOW_RANGE {
+							z.FollowingPlayerId = player.ID
+						}
+					}
+				}
+
+				// If we are now following a player, move towards it
+				if z.FollowingPlayerId != -1 {
+					followingPlayer := gs.Players[z.FollowingPlayerId]
+					// Follow player if close enough
+					if util.Distance(z.X, z.Y, followingPlayer.X, followingPlayer.Y) < ZOMBIE_FOLLOW_RANGE {
+						direction := util.RandomIntBetween(0, 2)
+						if direction == 0 {
+							xDist := followingPlayer.X - z.X
+							if xDist*xDist > 0 { // Just checking for positive magnitude
+								z.X += xDist / int64(math.Abs(float64(xDist)))
+							}
+						} else {
+							yDist := followingPlayer.Y - z.Y
+							if yDist*yDist > 0 { // Just checking for positive magnitude
+								z.Y += yDist / int64(math.Abs(float64(yDist)))
+							}
+						}
+					} else { // Lose track of the player if it is too far
+						z.FollowingPlayerId = -1
+					}
+				} else { // otherwise randomly move
+					randomDirection := util.RandomIntBetween(0, 4)
+					if randomDirection == 0 {
+						z.Y--
+					} else if randomDirection == 1 {
+						z.Y++
+					} else if randomDirection == 2 {
+						z.X--
+					} else if randomDirection == 3 {
+						z.X++
+					}
+				}
+
+				// send zombie updates to all players
+				for _, otherPlayer := range gs.Players {
+					otherPlayer.Conn.Write(packets.BuildUpdateZombiePacket(z.ToBytes()))
+				}
+
+			}
+		}
+		gs.Mutex.Unlock()
+
+		time.Sleep(dt * time.Millisecond)
 	}
 }

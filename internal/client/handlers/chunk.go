@@ -14,6 +14,6 @@ func ClientChunksHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []b
 		return
 	}
 	p := gs.GetPlayer(playerID)
-	nearbyChunks := gs.GetChunksAroundPlayer(p)
+	nearbyChunks, _ := gs.GetChunksAroundPlayer(p)
 	g.World.UpdateChunks(nearbyChunks)
 }

@@ -30,13 +30,16 @@ func NewServer(conf *config.ServerConfig) (*Server, error) {
 		return nil, fmt.Errorf("failed to listen on address %s: %w", conf.ServerAddress, err)
 	}
 
+	gs := game.NewGameState()
+	go gs.RunGameLoop()
+
 	return &Server{
 		Conf:       conf,
 		Listener:   listener,
 		Shutdown:   make(chan struct{}),
 		Connection: make(chan net.Conn),
 		Logger:     log.New(os.Stdout, "[GoldNet] (Server) ", log.Ldate|log.Ltime),
-		GameState:  game.NewGameState(),
+		GameState:  gs,
 	}, nil
 }
 

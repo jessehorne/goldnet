@@ -69,6 +69,17 @@ func (m *World) Draw(screen tcell.Screen, x, y, width, height int) {
 			}
 		}
 	}
+
+	// draw zombies
+	for _, z := range m.GameState.Zombies {
+		if z != nil {
+			bx := m.OffsetX + int(z.X)
+			by := m.OffsetY + int(z.Y)
+			if bx > 0 && bx < width && by > 0 && by < 26 {
+				screen.SetContent(bx, by, 'Z', nil, tcell.StyleDefault.Foreground(tcell.ColorWhite))
+			}
+		}
+	}
 }
 
 func (m *World) UpdateChunks(chunks []*game.Chunk) {

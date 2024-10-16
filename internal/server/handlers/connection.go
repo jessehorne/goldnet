@@ -1,10 +1,11 @@
 package handlers
 
 import (
+	"net"
+
 	"github.com/jessehorne/goldnet/internal/game"
 	"github.com/jessehorne/goldnet/internal/shared/packets"
 	"github.com/jessehorne/goldnet/internal/util"
-	"net"
 )
 
 func ServerUserJoinHandler(gs *game.GameState, playerID int64, conn net.Conn, data []byte) {
@@ -13,6 +14,11 @@ func ServerUserJoinHandler(gs *game.GameState, playerID int64, conn net.Conn, da
 	// add player to gamestates list of players
 	newPlayer := game.NewPlayer(playerID, 0, 0, conn)
 	gs.AddPlayer(newPlayer)
+
+	// send zombies to player
+	for _, z := range gs.Zombies {
+		newPlayer.Conn.Write(packets.BuildUpdateZombiePacket(z.ToBytes()))
+	}
 
 	// let every player know they joined
 	others := []*game.Player{}
@@ -40,7 +46,7 @@ func ServerUserJoinHandler(gs *game.GameState, playerID int64, conn net.Conn, da
 	conn.Write(packets.BuildPlayerSelfJoinedPacket(playerID, 0, 0, othersData))
 
 	// send nearby chunks to player
-	nearbyChunks := gs.GetChunksAroundPlayer(newPlayer)
+	nearbyChunks, _ := gs.GetChunksAroundPlayer(newPlayer)
 	var chunkData []byte
 	for _, c := range nearbyChunks {
 		chunkData = append(chunkData, c.ToBytes()...)
