@@ -1,10 +1,11 @@
 package handlers
 
 import (
+	"net"
+
 	"github.com/jessehorne/goldnet/internal/client/gui"
 	"github.com/jessehorne/goldnet/internal/game"
 	"github.com/jessehorne/goldnet/internal/util"
-	"net"
 )
 
 func ClientNewZombieHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []byte) {
@@ -20,13 +21,16 @@ func ClientNewZombieHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data 
 	dmg := util.BytesToInt64(data[c : c+8])
 	c += 8
 	gold := util.BytesToInt64(data[c : c+8])
+	c += 8
+	followingPlayerId := util.BytesToInt64(data[c : c+8])
 	newZombie := &game.Zombie{
-		ID:          id,
-		X:           x,
-		Y:           y,
-		HP:          hp,
-		Damage:      dmg,
-		GoldDropAmt: gold,
+		ID:                id,
+		X:                 x,
+		Y:                 y,
+		HP:                hp,
+		Damage:            dmg,
+		GoldDropAmt:       gold,
+		FollowingPlayerId: followingPlayerId,
 	}
 
 	gs.Zombies[id] = newZombie
@@ -45,6 +49,9 @@ func ClientUpdateZombieHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, da
 	dmg := util.BytesToInt64(data[c : c+8])
 	c += 8
 	gold := util.BytesToInt64(data[c : c+8])
+	c += 8
+	followingPlayerId := util.BytesToInt64(data[c : c+8])
+	c += 8
 
 	z, exists := gs.Zombies[id]
 	if exists {
@@ -53,5 +60,6 @@ func ClientUpdateZombieHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, da
 		z.HP = hp
 		z.Damage = dmg
 		z.GoldDropAmt = gold
+		z.FollowingPlayerId = followingPlayerId
 	}
 }
