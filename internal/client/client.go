@@ -60,6 +60,21 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 			return event
 		}
 
+		// determine if movement or something else
+		isMovement := util.IsRuneMovementKey(event.Rune())
+		if !isMovement {
+			// handle sidebar input
+			if event.Rune() == 'S' {
+				c.GUI.Sidebar.UpdatePlayerStats(p)
+				c.GUI.Sidebar.SetActiveTab("stats")
+			} else if event.Rune() == 'I' {
+				c.GUI.Sidebar.UpdatePlayerInventory(p)
+				c.GUI.Sidebar.SetActiveTab("inventory")
+			}
+			return nil
+		}
+
+		// it is movement, so handle movement
 		mod := (1 / float64(p.Speed)) * 1000
 
 		b := c.GameState.GetBelowBlockAtCoords(p.X, p.Y)
