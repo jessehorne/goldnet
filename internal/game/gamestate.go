@@ -194,69 +194,81 @@ func (gs *GameState) AddChunks(chunks []*Chunk) {
 	}
 }
 
+func (gs *GameState) UpdateZombies() {
+
+	// update zombie
+	gs.Mutex.Lock()
+	for _, z := range gs.Zombies {
+		// handle movement
+		doesMove := util.RandomIntBetween(0, 10) < 2
+		if doesMove {
+			// If not currently following a player, pick one
+			if z.FollowingPlayerId == -1 {
+				for _, player := range gs.Players {
+					if util.Distance(z.X, z.Y, player.X, player.Y) < ZOMBIE_FOLLOW_RANGE {
+						z.FollowingPlayerId = player.ID
+					}
+				}
+			}
+
+			// If we are now following a player, move towards it
+			if z.FollowingPlayerId != -1 {
+				if z == nil {
+					continue
+				}
+				followingPlayer := gs.Players[z.FollowingPlayerId]
+				if followingPlayer == nil {
+					continue
+				}
+				// Follow player if close enough
+				if util.Distance(z.X, z.Y, followingPlayer.X, followingPlayer.Y) < ZOMBIE_FOLLOW_RANGE {
+					direction := util.RandomIntBetween(0, 2)
+					if direction == 0 {
+						xDist := followingPlayer.X - z.X
+						if xDist*xDist > 0 { // Just checking for positive magnitude
+							z.X += xDist / int64(math.Abs(float64(xDist)))
+						}
+					} else {
+						yDist := followingPlayer.Y - z.Y
+						if yDist*yDist > 0 { // Just checking for positive magnitude
+							z.Y += yDist / int64(math.Abs(float64(yDist)))
+						}
+					}
+				} else { // Lose track of the player if it is too far
+					z.FollowingPlayerId = -1
+				}
+			} else { // otherwise randomly move
+				randomDirection := util.RandomIntBetween(0, 4)
+				if randomDirection == 0 {
+					z.Y--
+				} else if randomDirection == 1 {
+					z.Y++
+				} else if randomDirection == 2 {
+					z.X--
+				} else if randomDirection == 3 {
+					z.X++
+				}
+			}
+
+			// send zombie updates to all players
+			for _, otherPlayer := range gs.Players {
+				otherPlayer.Conn.Write(packets.BuildUpdateZombiePacket(z.ToBytes()))
+			}
+
+		}
+	}
+	gs.Mutex.Unlock()
+}
+
+func (gs *GameState) UpdateCombat() {
+
+}
+
 func (gs *GameState) RunGameLoop() {
 	for {
 		dt := time.Duration((1.0 / float64(gs.TPS)) * 1000)
-
-		// update zombie
-		gs.Mutex.Lock()
-		for _, z := range gs.Zombies {
-			// handle movement
-			doesMove := util.RandomIntBetween(0, 10) < 2
-			if doesMove {
-				// If not currently following a player, pick one
-				if z.FollowingPlayerId == -1 {
-					for _, player := range gs.Players {
-						if util.Distance(z.X, z.Y, player.X, player.Y) < ZOMBIE_FOLLOW_RANGE {
-							z.FollowingPlayerId = player.ID
-						}
-					}
-				}
-
-				// If we are now following a player, move towards it
-				if z.FollowingPlayerId != -1 {
-					followingPlayer := gs.Players[z.FollowingPlayerId]
-					if z == nil || followingPlayer == nil {
-						continue
-					}
-					// Follow player if close enough
-					if util.Distance(z.X, z.Y, followingPlayer.X, followingPlayer.Y) < ZOMBIE_FOLLOW_RANGE {
-						direction := util.RandomIntBetween(0, 2)
-						if direction == 0 {
-							xDist := followingPlayer.X - z.X
-							if xDist*xDist > 0 { // Just checking for positive magnitude
-								z.X += xDist / int64(math.Abs(float64(xDist)))
-							}
-						} else {
-							yDist := followingPlayer.Y - z.Y
-							if yDist*yDist > 0 { // Just checking for positive magnitude
-								z.Y += yDist / int64(math.Abs(float64(yDist)))
-							}
-						}
-					} else { // Lose track of the player if it is too far
-						z.FollowingPlayerId = -1
-					}
-				} else { // otherwise randomly move
-					randomDirection := util.RandomIntBetween(0, 4)
-					if randomDirection == 0 {
-						z.Y--
-					} else if randomDirection == 1 {
-						z.Y++
-					} else if randomDirection == 2 {
-						z.X--
-					} else if randomDirection == 3 {
-						z.X++
-					}
-				}
-
-				// send zombie updates to all players
-				for _, otherPlayer := range gs.Players {
-					otherPlayer.Conn.Write(packets.BuildUpdateZombiePacket(z.ToBytes()))
-				}
-
-			}
-		}
-		gs.Mutex.Unlock()
+		gs.UpdateCombat()
+		gs.UpdateZombies()
 
 		time.Sleep(dt * time.Millisecond)
 	}

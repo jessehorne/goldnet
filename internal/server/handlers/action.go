@@ -20,6 +20,7 @@ func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data
 
 	if action == packets.ActionToggleHostile {
 		p.Hostile = !p.Hostile
+		gs.Logger.Println("Toggled Hostile")
 		for _, player := range gs.Players {
 			setHostilePacket := packets.BuildSetHostilePacket(p.ID, p.Hostile)
 			player.Conn.Write(setHostilePacket)
