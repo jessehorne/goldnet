@@ -12,6 +12,7 @@ const (
 	PacketPlayerMoved
 	PacketUpdateSelfPlayer
 	PacketUpdateZombie
+	PacketUseItem
 )
 
 const (

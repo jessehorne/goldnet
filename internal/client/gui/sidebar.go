@@ -7,11 +7,12 @@ import (
 )
 
 type Sidebar struct {
-	Root      *tview.Grid
-	Pages     *tview.Pages
-	Nav       *tview.TextView
-	Stats     *tview.TextView
-	Inventory *tview.TextView
+	Root            *tview.Grid
+	Pages           *tview.Pages
+	Nav             *tview.TextView
+	Stats           *tview.TextView
+	Inventory       *tview.TextView
+	InventoryCursor int
 }
 
 func NewSidebar() *Sidebar {
@@ -58,7 +59,7 @@ func (s *Sidebar) SetActiveTab(name string) {
 		s.Pages.SetTitle("Player Stats")
 		tmpl = "[white](S)tats    [grey](I)nventory"
 	} else if name == "inventory" {
-		s.Pages.SetTitle("Player Inventory")
+		s.Pages.SetTitle("Player Inventory (PgUp / PgDown / Enter")
 		tmpl = "[grey](S)tats    [white](I)nventory"
 	}
 	s.Nav.SetText(tmpl)
@@ -87,5 +88,18 @@ Name: %s
 }
 
 func (s *Sidebar) UpdatePlayerInventory(p *game.Player) {
-	s.Inventory.SetText("coming soon")
+	tmpl := ``
+
+	for index, item := range p.Inventory.Items {
+		highlighted := index == s.InventoryCursor
+		var color string
+		if highlighted {
+			color = "[white]"
+		} else {
+			color = "[grey]"
+		}
+		tmpl += fmt.Sprintf("%s%dx %s\n", color, item.GetQuantity(), item.GetName())
+	}
+
+	s.Inventory.SetText(tmpl)
 }

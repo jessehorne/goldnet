@@ -9,8 +9,8 @@ import (
 )
 
 func ClientPlayerSelfJoinedHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []byte) {
-	playerID, x, y, others := packets.ParsePlayerSelfJoinedPacket(data)
-	p := game.NewPlayer(playerID, x, y, nil)
+	playerID, x, y, others, inv := packets.ParsePlayerSelfJoinedPacket(data)
+	p := game.NewPlayer(playerID, x, y, inv, nil)
 	gs.AddPlayer(p)
 	gs.SetIntStore("playerID", playerID)
 	g.Sidebar.UpdatePlayerStats(p)
