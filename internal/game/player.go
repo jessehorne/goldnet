@@ -1,6 +1,7 @@
 package game
 
 import (
+	"github.com/jessehorne/goldnet/internal/game/inventory"
 	"github.com/jessehorne/goldnet/internal/shared/packets"
 	"github.com/jessehorne/goldnet/internal/util"
 	"net"
@@ -14,7 +15,7 @@ type Player struct {
 	OldChunkX        int64
 	OldChunkY        int64
 	Sprite           rune
-	Inventory        []InventoryItem
+	Inventory        *inventory.Inventory
 	Conn             net.Conn
 	Speed            byte // how many blocks per second the player can travel (water speed is Speed/2)
 	LastMovementTime time.Time
@@ -25,13 +26,13 @@ type Player struct {
 	ST       int64
 }
 
-func NewPlayer(id, x, y int64, c net.Conn) *Player {
+func NewPlayer(id, x, y int64, inv []byte, c net.Conn) *Player {
 	return &Player{
 		ID:               id,
 		X:                x,
 		Y:                y,
 		Sprite:           '@',
-		Inventory:        []InventoryItem{},
+		Inventory:        inventory.NewInventory(inv),
 		Conn:             c,
 		LastMovementTime: time.Now(),
 

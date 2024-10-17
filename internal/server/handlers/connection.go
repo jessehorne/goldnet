@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	packets2 "github.com/jessehorne/goldnet/internal/client/packets"
+	"github.com/jessehorne/goldnet/internal/game/inventory"
 	"net"
 
 	"github.com/jessehorne/goldnet/internal/game"
@@ -12,8 +14,21 @@ func ServerUserJoinHandler(gs *game.GameState, playerID int64, conn net.Conn, da
 	gs.Logger.Println("[PACKET] user joined with ID of", playerID)
 
 	// add player to gamestates list of players
-	newPlayer := game.NewPlayer(playerID, 0, 0, conn)
+	newPlayer := game.NewPlayer(playerID, 0, 0, nil, conn)
 	gs.AddPlayer(newPlayer)
+
+	// add a welcome note to the players inventory
+	welcomeNote := inventory.NewNote(1, "a clean envelope", "welcome!")
+	welcomeNote.SetUseCallback(func() {
+		conn.Write(packets2.BuildMessagePacket(-1, "The note says 'Welcome!'"))
+	})
+	newPlayer.Inventory.AddItem(welcomeNote)
+
+	clueNote := inventory.NewNote(1, "a dirty envelope", "here's a clue...")
+	clueNote.SetUseCallback(func() {
+		conn.Write(packets2.BuildMessagePacket(-1, "The note says 'here's a clue...'"))
+	})
+	newPlayer.Inventory.AddItem(clueNote)
 
 	// send zombies to player
 	for _, z := range gs.Zombies {
@@ -43,7 +58,7 @@ func ServerUserJoinHandler(gs *game.GameState, playerID int64, conn net.Conn, da
 	}
 
 	// send self join packet to player with their ID
-	conn.Write(packets.BuildPlayerSelfJoinedPacket(playerID, 0, 0, othersData))
+	conn.Write(packets.BuildPlayerSelfJoinedPacket(playerID, 0, 0, othersData, newPlayer.Inventory.ToBytes()))
 
 	// send nearby chunks to player
 	nearbyChunks, _ := gs.GetChunksAroundPlayer(newPlayer)

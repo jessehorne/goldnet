@@ -10,5 +10,11 @@ import (
 
 func ClientMessageHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []byte) {
 	playerID, msg := packets.ParseMessagePacket(data)
-	g.Chat.AddMessage(fmt.Sprintf("Player #%d - %s", playerID, msg))
+	var who string
+	if playerID == -1 {
+		who = "(GAME)"
+	} else {
+		who = fmt.Sprintf("Player #%d", playerID)
+	}
+	g.Chat.AddMessage(fmt.Sprintf("%s - %s", who, msg))
 }
