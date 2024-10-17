@@ -68,6 +68,7 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 			// Toggle hostile mode
 			case 'e':
 				c.Conn.Write(packets.BuildUserToggleHostilePacket(p.Hostile))
+
 			// Handle sidebar input
 			case 'S':
 				c.GUI.Sidebar.UpdatePlayerStats(p)

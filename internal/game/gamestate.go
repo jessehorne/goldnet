@@ -249,6 +249,37 @@ func (gs *GameState) UpdateZombies() {
 					z.X++
 				}
 			}
+			// try to attack a nearby player
+			for _, otherPlayer := range gs.Players {
+
+				xDist := otherPlayer.X - z.X
+				yDist := otherPlayer.Y - z.Y
+
+				// Check for adjacency
+				if xDist*xDist <= 1 && yDist*yDist <= 1 {
+					otherPlayer.HP -= z.Damage
+					if otherPlayer.HP <= 0 {
+						gs.Logger.Printf("%s was struck down", otherPlayer.Username)
+
+						// TODO - Drop stuff and do a respawn
+						otherPlayer.X = 0
+						otherPlayer.Y = 0
+						otherPlayer.Gold = 0
+						otherPlayer.HP = 10
+
+						for _, player := range gs.Players {
+							player.Conn.Write(packets.BuildUpdateSelfPlayerPacket(otherPlayer.ToBytes()))
+						}
+					} else {
+						gs.Logger.Printf("%s was struck, %d HP remains", otherPlayer.Username, otherPlayer.HP)
+						// send update to all players
+						for _, player := range gs.Players {
+							player.Conn.Write(packets.BuildUpdateSelfPlayerPacket(otherPlayer.ToBytes()))
+						}
+					}
+					break
+				}
+			}
 
 			// send zombie updates to all players
 			for _, otherPlayer := range gs.Players {
@@ -261,7 +292,38 @@ func (gs *GameState) UpdateZombies() {
 }
 
 func (gs *GameState) UpdateCombat() {
+	gs.Mutex.Lock()
+	defer gs.Mutex.Unlock()
 
+	for _, player := range gs.Players {
+		if player.Hostile {
+			// Attack the first zombie you find in range
+			for _, zombie := range gs.Zombies {
+				xdist := zombie.X - player.X
+				ydist := zombie.Y - player.Y
+
+				// Must be on an adjacent or the same tile
+				// Diagonal works too
+				if xdist*xdist <= 1 && ydist*ydist <= 1 {
+					zombie.HP -= player.ST
+					if zombie.HP <= 0 {
+						gs.Logger.Printf("Zombie was struck down")
+						for _, player := range gs.Players {
+							player.Conn.Write(packets.BuildRemoveZombiePacket(zombie.ID))
+						}
+						delete(gs.Zombies, zombie.ID)
+					} else {
+						gs.Logger.Printf("Zombie was struck, %d HP remains", zombie.HP)
+						// send zombie update to all players
+						for _, otherPlayer := range gs.Players {
+							otherPlayer.Conn.Write(packets.BuildUpdateZombiePacket(zombie.ToBytes()))
+						}
+					}
+					break
+				}
+			}
+		}
+	}
 }
 
 func (gs *GameState) RunGameLoop() {
