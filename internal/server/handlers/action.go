@@ -48,15 +48,15 @@ func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data
 			gs.HandlePlayerAction(p, action)
 
 			// send the updated position to the player
-			conn.Write(packets.BuildMovePacket(p.ID, p.X, p.Y))
+			conn.Write(packets.BuildUpdatePlayerPacket(p.ToBytes()))
 
 			// send movement to other nearby players
 			nearbyPlayers := gs.GetPlayersAroundPlayer(p)
 			for _, other := range nearbyPlayers {
-				other.Conn.Write(packets.BuildMovePacket(p.ID, p.X, p.Y))
+				other.Conn.Write(packets.BuildUpdatePlayerPacket(p.ToBytes()))
 			}
 		} else {
-			conn.Write(packets.BuildMovePacket(p.ID, p.X, p.Y))
+			conn.Write(packets.BuildUpdatePlayerPacket(p.ToBytes()))
 		}
 
 		// send chunks if players chunk has updated

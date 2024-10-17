@@ -268,13 +268,13 @@ func (gs *GameState) UpdateZombies() {
 						otherPlayer.HP = 10
 
 						for _, player := range gs.Players {
-							player.Conn.Write(packets.BuildUpdateSelfPlayerPacket(otherPlayer.ToBytes()))
+							player.Conn.Write(packets.BuildUpdatePlayerPacket(otherPlayer.ToBytes()))
 						}
 					} else {
 						gs.Logger.Printf("%s was struck, %d HP remains", otherPlayer.Username, otherPlayer.HP)
 						// send update to all players
 						for _, player := range gs.Players {
-							player.Conn.Write(packets.BuildUpdateSelfPlayerPacket(otherPlayer.ToBytes()))
+							player.Conn.Write(packets.BuildUpdatePlayerPacket(otherPlayer.ToBytes()))
 						}
 					}
 					break

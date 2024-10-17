@@ -57,6 +57,8 @@ func (p *Player) ToBytes() []byte {
 	data = append(data, util.Int64ToBytes(int64(len(p.Username)))...)
 	// Add username bytes
 	data = append(data, []byte(p.Username)...)
+	// Add ID
+	data = append(data, util.Int64ToBytes(p.ID)...)
 	// Add X and Y coordinates
 	data = append(data, util.Int64ToBytes(p.X)...)
 	data = append(data, util.Int64ToBytes(p.Y)...)

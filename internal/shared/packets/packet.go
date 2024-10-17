@@ -9,9 +9,8 @@ const (
 	PacketPlayerJoined
 	PacketPlayerSelfJoined
 	PacketPlayerDisconnected
-	PacketPlayerMoved
 	PacketPlayerToggleHostile
-	PacketUpdateSelfPlayer
+	PacketUpdatePlayer
 	PacketUpdateZombie
 	PacketRemoveZombie
 )

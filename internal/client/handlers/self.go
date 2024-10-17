@@ -8,14 +8,10 @@ import (
 	"github.com/jessehorne/goldnet/internal/game"
 )
 
-func ClientUpdateSelfPlayerHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []byte) {
-	playerID, ok := gs.GetIntStore("playerID")
-	if !ok {
-		return
-	}
-	p := gs.GetPlayer(playerID)
-
+func ClientUpdatePlayerHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []byte) {
 	updatePlayer := packets.ParsePlayerBytes(data)
+	p := gs.GetPlayer(updatePlayer.ID)
+
 	p.X = updatePlayer.X
 	p.Y = updatePlayer.Y
 	p.Gold = updatePlayer.Gold
