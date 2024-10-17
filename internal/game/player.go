@@ -10,22 +10,24 @@ import (
 )
 
 type Player struct {
-	ID               int64
-	X                int64
-	Y                int64
-	OldChunkX        int64
-	OldChunkY        int64
-	Sprite           rune
-	Inventory        *inventory.Inventory
-	Conn             net.Conn
+	ID        int64
+	X         int64
+	Y         int64
+	OldChunkX int64
+	OldChunkY int64
+	Sprite    rune
+	Inventory *inventory.Inventory
+	Conn      net.Conn
+
 	LastMovementTime time.Time
+	LastAttackTime   time.Time
 
 	Username    string
 	Gold        int64
 	HP          int64
 	ST          int64
-	Speed       byte // how many blocks per second the player can travel (water speed is Speed/2)
-	AttackSpeed int64
+	Speed       byte    // how many blocks per second the player can travel (water speed is Speed/2)
+	AttackSpeed float32 // how many times the player can attack per second
 
 	Hostile bool
 }
@@ -39,10 +41,11 @@ func NewPlayer(id, x, y int64, inv []byte, c net.Conn) *Player {
 		Inventory:        inventory.NewInventory(inv),
 		Conn:             c,
 		LastMovementTime: time.Now(),
+		LastAttackTime:   time.Now(),
 
 		Username:    "bob",
 		Gold:        0,
-		HP:          10,
+		HP:          100,
 		ST:          2,
 		Speed:       10,
 		AttackSpeed: 1,

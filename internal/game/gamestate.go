@@ -250,34 +250,39 @@ func (gs *GameState) UpdateZombies() {
 				}
 			}
 			// try to attack a nearby player
-			for _, otherPlayer := range gs.Players {
+			timePerAttack := 1500.0
+			canAttackAt := z.LastAttackTime.Add(time.Duration(timePerAttack) * time.Millisecond)
+			if canAttackAt.Before(time.Now()) {
+				for _, otherPlayer := range gs.Players {
 
-				xDist := otherPlayer.X - z.X
-				yDist := otherPlayer.Y - z.Y
+					xDist := otherPlayer.X - z.X
+					yDist := otherPlayer.Y - z.Y
 
-				// Check for adjacency
-				if xDist*xDist <= 1 && yDist*yDist <= 1 {
-					otherPlayer.HP -= z.Damage
-					if otherPlayer.HP <= 0 {
-						gs.Logger.Printf("%s was struck down", otherPlayer.Username)
+					// Check for adjacency
+					if xDist*xDist <= 1 && yDist*yDist <= 1 {
+						z.LastAttackTime = time.Now()
+						otherPlayer.HP -= z.Damage
+						if otherPlayer.HP <= 0 {
+							gs.Logger.Printf("%s was struck down", otherPlayer.Username)
 
-						// TODO - Drop stuff and do a respawn
-						otherPlayer.X = 0
-						otherPlayer.Y = 0
-						otherPlayer.Gold = 0
-						otherPlayer.HP = 10
+							// TODO - Drop stuff and do a respawn
+							otherPlayer.X = 0
+							otherPlayer.Y = 0
+							otherPlayer.Gold = 0
+							otherPlayer.HP = 10
 
-						for _, player := range gs.Players {
-							player.Conn.Write(packets.BuildUpdatePlayerPacket(otherPlayer.ToBytes()))
+							for _, player := range gs.Players {
+								player.Conn.Write(packets.BuildUpdatePlayerPacket(otherPlayer.ToBytes()))
+							}
+						} else {
+							gs.Logger.Printf("%s was struck, %d HP remains", otherPlayer.Username, otherPlayer.HP)
+							// send update to all players
+							for _, player := range gs.Players {
+								player.Conn.Write(packets.BuildUpdatePlayerPacket(otherPlayer.ToBytes()))
+							}
 						}
-					} else {
-						gs.Logger.Printf("%s was struck, %d HP remains", otherPlayer.Username, otherPlayer.HP)
-						// send update to all players
-						for _, player := range gs.Players {
-							player.Conn.Write(packets.BuildUpdatePlayerPacket(otherPlayer.ToBytes()))
-						}
+						break
 					}
-					break
 				}
 			}
 
@@ -296,7 +301,9 @@ func (gs *GameState) UpdateCombat() {
 	defer gs.Mutex.Unlock()
 
 	for _, player := range gs.Players {
-		if player.Hostile {
+		timePerAttack := 1000.0 / player.AttackSpeed
+		canAttackAt := player.LastAttackTime.Add(time.Duration(timePerAttack) * time.Millisecond)
+		if player.Hostile && canAttackAt.Before(time.Now()) {
 			// Attack the first zombie you find in range
 			for _, zombie := range gs.Zombies {
 				xdist := zombie.X - player.X
@@ -305,6 +312,7 @@ func (gs *GameState) UpdateCombat() {
 				// Must be on an adjacent or the same tile
 				// Diagonal works too
 				if xdist*xdist <= 1 && ydist*ydist <= 1 {
+					player.LastAttackTime = time.Now()
 					zombie.HP -= player.ST
 					if zombie.HP <= 0 {
 						gs.Logger.Printf("Zombie was struck down")
