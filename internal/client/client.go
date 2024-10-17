@@ -61,6 +61,32 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 			return event
 		}
 
+		// handle inventory movement
+		if event.Key() == tcell.KeyPgUp {
+			if c.GUI.Sidebar.InventoryCursor > 0 {
+				c.GUI.Sidebar.InventoryCursor--
+			} else {
+				c.GUI.Sidebar.InventoryCursor = len(p.Inventory.Items) - 1
+			}
+			c.GUI.Sidebar.UpdatePlayerInventory(p)
+			return nil
+		} else if event.Key() == tcell.KeyPgDn {
+			if c.GUI.Sidebar.InventoryCursor < len(p.Inventory.Items)-1 {
+				c.GUI.Sidebar.InventoryCursor++
+			} else {
+				c.GUI.Sidebar.InventoryCursor = 0
+			}
+			c.GUI.Sidebar.UpdatePlayerInventory(p)
+			return nil
+		} else if event.Key() == tcell.KeyEnter {
+			n, _ := c.GUI.Sidebar.Pages.GetFrontPage()
+			if n == "inventory" {
+				if len(p.Inventory.Items) > 0 {
+					c.Conn.Write(packets.BuildUseItemPacket(int64(c.GUI.Sidebar.InventoryCursor)))
+				}
+			}
+		}
+
 		// determine if movement or something else
 		isMovement := util.IsRuneMovementKey(event.Rune())
 		if !isMovement {

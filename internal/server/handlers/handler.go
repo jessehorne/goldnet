@@ -21,6 +21,7 @@ func NewPacketHandler(gs *game.GameState) *PacketHandler {
 			packets.PacketUserLeave:   ServerUserDisconnectedHandler,
 			packets.PacketAction:      ServerActionHandler,
 			packets.PacketSendMessage: ServerMessageHandler,
+			packets.PacketUseItem:     ServerUseItemHandler,
 		},
 	}
 }

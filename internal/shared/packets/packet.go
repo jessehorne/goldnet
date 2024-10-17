@@ -13,6 +13,7 @@ const (
 	PacketUpdatePlayer
 	PacketUpdateZombie
 	PacketRemoveZombie
+	PacketUseItem
 )
 
 const (

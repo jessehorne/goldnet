@@ -326,6 +326,14 @@ func (gs *GameState) UpdateCombat() {
 	}
 }
 
+func (gs *GameState) UseItem(p *Player, itemID int64) {
+	for _, item := range p.Inventory.Items {
+		if item.GetID() == itemID {
+			item.TriggerUse()
+		}
+	}
+}
+
 func (gs *GameState) RunGameLoop() {
 	for {
 		dt := time.Duration((1.0 / float64(gs.TPS)) * 1000)
