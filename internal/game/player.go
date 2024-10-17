@@ -45,7 +45,7 @@ func NewPlayer(id, x, y int64, inv []byte, c net.Conn) *Player {
 
 		Username:    "bob",
 		Gold:        0,
-		HP:          100,
+		HP:          10,
 		ST:          2,
 		Speed:       10,
 		AttackSpeed: 1,

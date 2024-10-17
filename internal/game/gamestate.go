@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"log"
 	"math"
 	"os"
@@ -262,8 +263,12 @@ func (gs *GameState) UpdateZombies() {
 					if xDist*xDist <= 1 && yDist*yDist <= 1 {
 						z.LastAttackTime = time.Now()
 						otherPlayer.HP -= z.Damage
+
+						msg := fmt.Sprintf("You were struck by zombie for %d HP", z.Damage)
+						otherPlayer.Conn.Write(packets.BuildMessagePacket(-1, msg))
+
 						if otherPlayer.HP <= 0 {
-							gs.Logger.Printf("%s was struck down", otherPlayer.Username)
+							otherPlayer.Conn.Write(packets.BuildMessagePacket(-1, "YOU WERE STRUCK DOWN BY ZOMBIE"))
 
 							// TODO - Drop stuff and do a respawn
 							otherPlayer.X = 0
@@ -275,7 +280,6 @@ func (gs *GameState) UpdateZombies() {
 								player.Conn.Write(packets.BuildUpdatePlayerPacket(otherPlayer.ToBytes()))
 							}
 						} else {
-							gs.Logger.Printf("%s was struck, %d HP remains", otherPlayer.Username, otherPlayer.HP)
 							// send update to all players
 							for _, player := range gs.Players {
 								player.Conn.Write(packets.BuildUpdatePlayerPacket(otherPlayer.ToBytes()))
@@ -315,13 +319,14 @@ func (gs *GameState) UpdateCombat() {
 					player.LastAttackTime = time.Now()
 					zombie.HP -= player.ST
 					if zombie.HP <= 0 {
-						gs.Logger.Printf("Zombie was struck down")
+						player.Conn.Write(packets.BuildMessagePacket(-1, "You struck the zombie down"))
 						for _, player := range gs.Players {
 							player.Conn.Write(packets.BuildRemoveZombiePacket(zombie.ID))
 						}
 						delete(gs.Zombies, zombie.ID)
 					} else {
-						gs.Logger.Printf("Zombie was struck, %d HP remains", zombie.HP)
+						msg := fmt.Sprintf("You struck the zombie for %d HP", player.ST)
+						player.Conn.Write(packets.BuildMessagePacket(-1, msg))
 						// send zombie update to all players
 						for _, otherPlayer := range gs.Players {
 							otherPlayer.Conn.Write(packets.BuildUpdateZombiePacket(zombie.ToBytes()))
