@@ -1,6 +1,8 @@
 package game
 
 import (
+	"time"
+
 	"github.com/jessehorne/goldnet/internal/util"
 )
 
@@ -18,6 +20,8 @@ type Zombie struct {
 	Damage            int64
 	GoldDropAmt       int64
 	FollowingPlayerId int64 // -1 if not following anyone
+
+	LastAttackTime time.Time
 }
 
 func NewZombie(x, y int64) *Zombie {
@@ -31,6 +35,7 @@ func NewZombie(x, y int64) *Zombie {
 		Damage:            5 + mod,
 		GoldDropAmt:       5 + mod,
 		FollowingPlayerId: -1,
+		LastAttackTime:    time.Now(),
 	}
 }
 

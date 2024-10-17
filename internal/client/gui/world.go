@@ -1,11 +1,12 @@
 package gui
 
 import (
+	"sync"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/jessehorne/goldnet/internal/game"
 	"github.com/jessehorne/goldnet/internal/shared"
 	"github.com/rivo/tview"
-	"sync"
 )
 
 type World struct {
@@ -65,7 +66,11 @@ func (m *World) Draw(screen tcell.Screen, x, y, width, height int) {
 			bx := m.OffsetX + int(p.X)
 			by := m.OffsetY + int(p.Y)
 			if bx > 0 && bx < width && by > 0 && by < 26 {
-				screen.SetContent(bx, by, '@', nil, tcell.StyleDefault.Foreground(tcell.ColorWhite))
+				style := tcell.StyleDefault.Foreground(tcell.ColorWhite)
+				if p.Hostile {
+					style = style.Background(tcell.ColorRed)
+				}
+				screen.SetContent(bx, by, '@', nil, style)
 			}
 		}
 	}

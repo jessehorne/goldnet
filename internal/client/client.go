@@ -2,6 +2,11 @@ package client
 
 import (
 	"bufio"
+	"log"
+	"net"
+	"os"
+	"time"
+
 	"github.com/gdamore/tcell/v2"
 	"github.com/jessehorne/goldnet/internal/client/gui"
 	"github.com/jessehorne/goldnet/internal/client/handlers"
@@ -11,10 +16,6 @@ import (
 	sharedPackets "github.com/jessehorne/goldnet/internal/shared/packets"
 	"github.com/jessehorne/goldnet/internal/util"
 	"github.com/rivo/tview"
-	"log"
-	"net"
-	"os"
-	"time"
 )
 
 type Client struct {
@@ -89,11 +90,16 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 		// determine if movement or something else
 		isMovement := util.IsRuneMovementKey(event.Rune())
 		if !isMovement {
-			// handle sidebar input
-			if event.Rune() == 'S' {
+			switch event.Rune() {
+			// Toggle hostile mode
+			case 'e':
+				c.Conn.Write(packets.BuildUserToggleHostilePacket(p.Hostile))
+
+			// Handle sidebar input
+			case 'S':
 				c.GUI.Sidebar.UpdatePlayerStats(p)
 				c.GUI.Sidebar.SetActiveTab("stats")
-			} else if event.Rune() == 'I' {
+			case 'I':
 				c.GUI.Sidebar.UpdatePlayerInventory(p)
 				c.GUI.Sidebar.SetActiveTab("inventory")
 			}

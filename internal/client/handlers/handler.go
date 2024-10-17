@@ -19,14 +19,15 @@ func NewPacketHandler(gs *game.GameState) *PacketHandler {
 	return &PacketHandler{
 		GameState: gs,
 		Handlers: map[byte]Handler{
-			packets.PacketPlayerJoined:       ClientPlayerJoinedHandler,
-			packets.PacketPlayerSelfJoined:   ClientPlayerSelfJoinedHandler,
-			packets.PacketPlayerDisconnected: ClientPlayerDisconnectedHandler,
-			packets.PacketPlayerMoved:        ClientPlayerMovedHandler,
-			packets.PacketChunks:             ClientChunksHandler,
-			packets.PacketSendMessage:        ClientMessageHandler,
-			packets.PacketUpdateSelfPlayer:   ClientUpdateSelfPlayerHandler,
-			packets.PacketUpdateZombie:       ClientUpdateZombieHandler,
+			packets.PacketPlayerJoined:        ClientPlayerJoinedHandler,
+			packets.PacketPlayerSelfJoined:    ClientPlayerSelfJoinedHandler,
+			packets.PacketPlayerDisconnected:  ClientPlayerDisconnectedHandler,
+			packets.PacketPlayerToggleHostile: ClientPlayerToggleHostileHandler,
+			packets.PacketChunks:              ClientChunksHandler,
+			packets.PacketSendMessage:         ClientMessageHandler,
+			packets.PacketUpdatePlayer:        ClientUpdatePlayerHandler,
+			packets.PacketUpdateZombie:        ClientUpdateZombieHandler,
+			packets.PacketRemoveZombie:        ClientRemoveZombieHandler,
 		},
 	}
 }

@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	packets2 "github.com/jessehorne/goldnet/internal/client/packets"
-	"github.com/jessehorne/goldnet/internal/game/inventory"
 	"net"
+
+	"github.com/jessehorne/goldnet/internal/game/inventory"
 
 	"github.com/jessehorne/goldnet/internal/game"
 	"github.com/jessehorne/goldnet/internal/shared/packets"
@@ -20,13 +20,13 @@ func ServerUserJoinHandler(gs *game.GameState, playerID int64, conn net.Conn, da
 	// add a welcome note to the players inventory
 	welcomeNote := inventory.NewNote(1, "a clean envelope", "welcome!")
 	welcomeNote.SetUseCallback(func() {
-		conn.Write(packets2.BuildMessagePacket(-1, "The note says 'Welcome!'"))
+		conn.Write(packets.BuildMessagePacket(-1, "The note says 'Welcome!'"))
 	})
 	newPlayer.Inventory.AddItem(welcomeNote)
 
 	clueNote := inventory.NewNote(1, "a dirty envelope", "here's a clue...")
 	clueNote.SetUseCallback(func() {
-		conn.Write(packets2.BuildMessagePacket(-1, "The note says 'here's a clue...'"))
+		conn.Write(packets.BuildMessagePacket(-1, "The note says 'here's a clue...'"))
 	})
 	newPlayer.Inventory.AddItem(clueNote)
 
