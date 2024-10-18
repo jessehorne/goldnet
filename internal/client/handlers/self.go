@@ -24,10 +24,10 @@ func ClientUpdatePlayerHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, da
 	currentPlayerID, exists := gs.GetIntStore("playerID")
 	if exists {
 		if currentPlayerID == updatePlayer.ID {
+			g.Sidebar.UpdatePlayerStats(p)
 			g.World.OffsetX = 50 + -int(p.X)
 			g.World.OffsetY = 13 + -int(p.Y)
 		}
 	}
 
-	g.Sidebar.UpdatePlayerStats(p)
 }

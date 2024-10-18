@@ -282,16 +282,13 @@ func (gs *GameState) UpdateZombies() {
 							otherPlayer.Y = 0
 							otherPlayer.Gold = 0
 							otherPlayer.HP = 10
-
-							for _, player := range gs.Players {
-								player.Conn.Write(packets.BuildUpdatePlayerPacket(otherPlayer.ToBytes()))
-							}
-						} else {
-							// send update to all players
-							for _, player := range gs.Players {
-								player.Conn.Write(packets.BuildUpdatePlayerPacket(otherPlayer.ToBytes()))
-							}
 						}
+
+						// send update to all players
+						for _, player := range gs.Players {
+							player.Conn.Write(packets.BuildUpdatePlayerPacket(otherPlayer.ToBytes()))
+						}
+
 						break
 					}
 				}
@@ -334,14 +331,64 @@ func (gs *GameState) UpdateCombat() {
 					} else {
 						msg := fmt.Sprintf("You struck the zombie for %d HP", player.ST)
 						player.Conn.Write(packets.BuildMessagePacket(-1, msg))
+
 						// send zombie update to all players
 						for _, otherPlayer := range gs.Players {
 							otherPlayer.Conn.Write(packets.BuildUpdateZombiePacket(zombie.ToBytes()))
 						}
 					}
-					break
+
+					goto endattackattempt
 				}
 			}
+
+			for _, otherPlayer := range gs.Players {
+
+				// Suicide watch
+				if otherPlayer.ID == player.ID {
+					continue
+				}
+
+				xdist := otherPlayer.X - player.X
+				ydist := otherPlayer.Y - player.Y
+
+				// Must be on an adjacent or the same tile
+				// Diagonal works too
+				if xdist*xdist <= 1 && ydist*ydist <= 1 {
+					player.LastAttackTime = time.Now()
+					otherPlayer.HP -= player.ST
+
+					msg2 := fmt.Sprintf("You struck %s for %d HP", otherPlayer.Username, player.ST)
+					player.Conn.Write(packets.BuildMessagePacket(-1, msg2))
+
+					msg := fmt.Sprintf("You were struck by %s for %d HP", player.Username, player.ST)
+					otherPlayer.Conn.Write(packets.BuildMessagePacket(-1, msg))
+
+					if otherPlayer.HP <= 0 {
+						msg := fmt.Sprintf("You struck down %s", otherPlayer.Username)
+						player.Conn.Write(packets.BuildMessagePacket(-1, msg))
+
+						msg2 := fmt.Sprintf("YOU WERE STRUCK DOWN BY %s", player.Username)
+						otherPlayer.Conn.Write(packets.BuildMessagePacket(-1, msg2))
+
+						// TODO - Drop stuff and do a respawn
+						otherPlayer.X = 0
+						otherPlayer.Y = 0
+						otherPlayer.Gold = 0
+						otherPlayer.HP = 10
+					}
+
+					// send update to all players
+					for _, player := range gs.Players {
+						player.Conn.Write(packets.BuildUpdatePlayerPacket(otherPlayer.ToBytes()))
+					}
+
+					goto endattackattempt
+				}
+			}
+
+		endattackattempt:
+			continue
 		}
 	}
 }
