@@ -2,10 +2,11 @@ package handlers
 
 import (
 	"fmt"
-	"github.com/jessehorne/goldnet/internal/client/gui"
-	"github.com/jessehorne/goldnet/internal/client/packets"
-	"github.com/jessehorne/goldnet/internal/game"
 	"net"
+
+	"github.com/jessehorne/goldnet/internal/client/gui"
+	"github.com/jessehorne/goldnet/internal/game"
+	"github.com/jessehorne/goldnet/internal/shared/packets"
 )
 
 func ClientMessageHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []byte) {

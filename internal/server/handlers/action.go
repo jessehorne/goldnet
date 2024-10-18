@@ -18,6 +18,15 @@ func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data
 		return
 	}
 
+	if action == packets.ActionToggleHostile {
+		p.Hostile = !p.Hostile
+		gs.Logger.Println("Toggled Hostile")
+		for _, player := range gs.Players {
+			setHostilePacket := packets.BuildSetHostilePacket(p.ID, p.Hostile)
+			player.Conn.Write(setHostilePacket)
+		}
+	}
+
 	if packets.IsMovementAction(action) {
 		mod := (1 / float64(p.Speed)) * 1000
 
@@ -39,15 +48,15 @@ func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data
 			gs.HandlePlayerAction(p, action)
 
 			// send the updated position to the player
-			conn.Write(packets.BuildMovePacket(p.ID, p.X, p.Y))
+			conn.Write(packets.BuildUpdatePlayerPacket(p.ToBytes()))
 
 			// send movement to other nearby players
 			nearbyPlayers := gs.GetPlayersAroundPlayer(p)
 			for _, other := range nearbyPlayers {
-				other.Conn.Write(packets.BuildMovePacket(p.ID, p.X, p.Y))
+				other.Conn.Write(packets.BuildUpdatePlayerPacket(p.ToBytes()))
 			}
 		} else {
-			conn.Write(packets.BuildMovePacket(p.ID, p.X, p.Y))
+			conn.Write(packets.BuildUpdatePlayerPacket(p.ToBytes()))
 		}
 
 		// send chunks if players chunk has updated

@@ -35,3 +35,9 @@ func ClientUpdateZombieHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, da
 	}
 	gs.Zombies[id] = newZombie
 }
+
+func ClientRemoveZombieHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []byte) {
+	c := 0
+	id := util.BytesToInt64(data[c : c+8])
+	delete(gs.Zombies, id)
+}
