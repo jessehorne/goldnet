@@ -13,25 +13,25 @@ import (
 )
 
 type GameState struct {
-	Players     map[int64]*Player
-	Zombies     map[int64]*Zombie
-	PlayerCount int64
-	Mutex       sync.Mutex
-	Logger      *log.Logger
-	Chunks      map[int64]map[int64]*Chunk
-	IntStore    map[string]int64
-	TPS         int // ticks per second
+	Players       map[int64]*Player
+	PlayerCounter int64
+	Zombies       map[int64]*Zombie
+	Mutex         sync.Mutex
+	Logger        *log.Logger
+	Chunks        map[int64]map[int64]*Chunk
+	IntStore      map[string]int64
+	TPS           int // ticks per second
 }
 
 func NewGameState() *GameState {
 	return &GameState{
-		Logger:      log.New(os.Stdout, "[GoldNet] (GameState) ", log.Ldate|log.Ltime),
-		Players:     map[int64]*Player{},
-		Zombies:     map[int64]*Zombie{},
-		PlayerCount: 0,
-		Chunks:      map[int64]map[int64]*Chunk{},
-		IntStore:    map[string]int64{},
-		TPS:         10, // ticks per second
+		Logger:        log.New(os.Stdout, "[GoldNet] (GameState) ", log.Ldate|log.Ltime),
+		Players:       map[int64]*Player{},
+		Zombies:       map[int64]*Zombie{},
+		PlayerCounter: 0,
+		Chunks:        map[int64]map[int64]*Chunk{},
+		IntStore:      map[string]int64{},
+		TPS:           10, // ticks per second
 	}
 }
 
@@ -43,6 +43,13 @@ func (gs *GameState) GetPlayer(playerID int64) *Player {
 		return nil
 	}
 	return p
+}
+
+func (gs *GameState) NextPlayerID() int64 {
+	gs.Mutex.Lock()
+	defer gs.Mutex.Unlock()
+	gs.PlayerCounter += 1
+	return gs.PlayerCounter
 }
 
 func (gs *GameState) AddPlayer(p *Player) {
