@@ -59,7 +59,7 @@ func (s *Sidebar) SetActiveTab(name string) {
 		s.Pages.SetTitle("Player Stats")
 		tmpl = "[white](S)tats    [grey](I)nventory"
 	} else if name == "inventory" {
-		s.Pages.SetTitle("Player Inventory (PgUp / PgDown / Enter")
+		s.Pages.SetTitle("Player Inventory (PgUp / PgDown / Enter)")
 		tmpl = "[grey](S)tats    [white](I)nventory"
 	}
 	s.Nav.SetText(tmpl)
