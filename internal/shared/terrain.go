@@ -28,7 +28,7 @@ var (
 
 	Above = map[byte]rune{
 		game.AboveNothing: ' ',
-		game.AboveTree:    '⤉',
+		game.AboveTree:    'T',
 	}
 )
 

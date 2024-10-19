@@ -77,8 +77,7 @@ func (s *Server) HandleConnection(conn net.Conn, handler *handlers.PacketHandler
 	defer conn.Close()
 	s.Logger.Println("connection made: ", conn.RemoteAddr().String())
 	reader := bufio.NewReader(conn)
-	s.GameState.PlayerCount++
-	playerID := s.GameState.PlayerCount
+	playerID := s.GameState.NextPlayerID()
 	for {
 		// first 8 bytes (int64) is how large this packet is in bytes
 		var sizeBytes []byte

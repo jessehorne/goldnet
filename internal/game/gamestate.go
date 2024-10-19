@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"log"
 	"math"
 	"os"
@@ -12,25 +13,25 @@ import (
 )
 
 type GameState struct {
-	Players     map[int64]*Player
-	Zombies     map[int64]*Zombie
-	PlayerCount int64
-	Mutex       sync.Mutex
-	Logger      *log.Logger
-	Chunks      map[int64]map[int64]*Chunk
-	IntStore    map[string]int64
-	TPS         int // ticks per second
+	Players       map[int64]*Player
+	PlayerCounter int64
+	Zombies       map[int64]*Zombie
+	Mutex         sync.Mutex
+	Logger        *log.Logger
+	Chunks        map[int64]map[int64]*Chunk
+	IntStore      map[string]int64
+	TPS           int // ticks per second
 }
 
 func NewGameState() *GameState {
 	return &GameState{
-		Logger:      log.New(os.Stdout, "[GoldNet] (GameState) ", log.Ldate|log.Ltime),
-		Players:     map[int64]*Player{},
-		Zombies:     map[int64]*Zombie{},
-		PlayerCount: 0,
-		Chunks:      map[int64]map[int64]*Chunk{},
-		IntStore:    map[string]int64{},
-		TPS:         10, // ticks per second
+		Logger:        log.New(os.Stdout, "[GoldNet] (GameState) ", log.Ldate|log.Ltime),
+		Players:       map[int64]*Player{},
+		Zombies:       map[int64]*Zombie{},
+		PlayerCounter: 0,
+		Chunks:        map[int64]map[int64]*Chunk{},
+		IntStore:      map[string]int64{},
+		TPS:           10, // ticks per second
 	}
 }
 
@@ -42,6 +43,13 @@ func (gs *GameState) GetPlayer(playerID int64) *Player {
 		return nil
 	}
 	return p
+}
+
+func (gs *GameState) NextPlayerID() int64 {
+	gs.Mutex.Lock()
+	defer gs.Mutex.Unlock()
+	gs.PlayerCounter += 1
+	return gs.PlayerCounter
 }
 
 func (gs *GameState) AddPlayer(p *Player) {
@@ -194,6 +202,197 @@ func (gs *GameState) AddChunks(chunks []*Chunk) {
 	}
 }
 
+func (gs *GameState) UpdateZombies() {
+
+	// update zombie
+	gs.Mutex.Lock()
+	for _, z := range gs.Zombies {
+		// handle movement
+		doesMove := util.RandomIntBetween(0, 10) < 2
+		if doesMove {
+			// If not currently following a player, pick one
+			if z.FollowingPlayerId == -1 {
+				for _, player := range gs.Players {
+					if util.Distance(z.X, z.Y, player.X, player.Y) < ZOMBIE_FOLLOW_RANGE {
+						z.FollowingPlayerId = player.ID
+					}
+				}
+			}
+
+			// If we are now following a player, move towards it
+			if z.FollowingPlayerId != -1 {
+				if z == nil {
+					continue
+				}
+				followingPlayer := gs.Players[z.FollowingPlayerId]
+				if followingPlayer == nil {
+					continue
+				}
+				// Follow player if close enough
+				if util.Distance(z.X, z.Y, followingPlayer.X, followingPlayer.Y) < ZOMBIE_FOLLOW_RANGE {
+					direction := util.RandomIntBetween(0, 2)
+					if direction == 0 {
+						xDist := followingPlayer.X - z.X
+						if xDist*xDist > 0 { // Just checking for positive magnitude
+							z.X += xDist / int64(math.Abs(float64(xDist)))
+						}
+					} else {
+						yDist := followingPlayer.Y - z.Y
+						if yDist*yDist > 0 { // Just checking for positive magnitude
+							z.Y += yDist / int64(math.Abs(float64(yDist)))
+						}
+					}
+				} else { // Lose track of the player if it is too far
+					z.FollowingPlayerId = -1
+				}
+			} else { // otherwise randomly move
+				randomDirection := util.RandomIntBetween(0, 4)
+				if randomDirection == 0 {
+					z.Y--
+				} else if randomDirection == 1 {
+					z.Y++
+				} else if randomDirection == 2 {
+					z.X--
+				} else if randomDirection == 3 {
+					z.X++
+				}
+			}
+			// try to attack a nearby player
+			timePerAttack := 1500.0
+			canAttackAt := z.LastAttackTime.Add(time.Duration(timePerAttack) * time.Millisecond)
+			if canAttackAt.Before(time.Now()) {
+				for _, otherPlayer := range gs.Players {
+
+					xDist := otherPlayer.X - z.X
+					yDist := otherPlayer.Y - z.Y
+
+					// Check for adjacency
+					if xDist*xDist <= 1 && yDist*yDist <= 1 {
+						z.LastAttackTime = time.Now()
+						otherPlayer.HP -= z.Damage
+
+						msg := fmt.Sprintf("You were struck by zombie for %d HP", z.Damage)
+						otherPlayer.Conn.Write(packets.BuildMessagePacket(-1, msg))
+
+						if otherPlayer.HP <= 0 {
+							otherPlayer.Conn.Write(packets.BuildMessagePacket(-1, "YOU WERE STRUCK DOWN BY ZOMBIE"))
+
+							// TODO - Drop stuff and do a respawn
+							otherPlayer.X = 0
+							otherPlayer.Y = 0
+							otherPlayer.Gold = 0
+							otherPlayer.HP = 10
+						}
+
+						// send update to all players
+						for _, player := range gs.Players {
+							player.Conn.Write(packets.BuildUpdatePlayerPacket(otherPlayer.ToBytes()))
+						}
+
+						break
+					}
+				}
+			}
+
+			// send zombie updates to all players
+			for _, otherPlayer := range gs.Players {
+				otherPlayer.Conn.Write(packets.BuildUpdateZombiePacket(z.ToBytes()))
+			}
+
+		}
+	}
+	gs.Mutex.Unlock()
+}
+
+func (gs *GameState) UpdateCombat() {
+	gs.Mutex.Lock()
+	defer gs.Mutex.Unlock()
+
+	for _, player := range gs.Players {
+		timePerAttack := 1000.0 / player.AttackSpeed
+		canAttackAt := player.LastAttackTime.Add(time.Duration(timePerAttack) * time.Millisecond)
+		if player.Hostile && canAttackAt.Before(time.Now()) {
+			// Attack the first zombie you find in range
+			for _, zombie := range gs.Zombies {
+				xdist := zombie.X - player.X
+				ydist := zombie.Y - player.Y
+
+				// Must be on an adjacent or the same tile
+				// Diagonal works too
+				if xdist*xdist <= 1 && ydist*ydist <= 1 {
+					player.LastAttackTime = time.Now()
+					zombie.HP -= player.ST
+					if zombie.HP <= 0 {
+						player.Conn.Write(packets.BuildMessagePacket(-1, "You struck the zombie down"))
+						for _, player := range gs.Players {
+							player.Conn.Write(packets.BuildRemoveZombiePacket(zombie.ID))
+						}
+						delete(gs.Zombies, zombie.ID)
+					} else {
+						msg := fmt.Sprintf("You struck the zombie for %d HP", player.ST)
+						player.Conn.Write(packets.BuildMessagePacket(-1, msg))
+
+						// send zombie update to all players
+						for _, otherPlayer := range gs.Players {
+							otherPlayer.Conn.Write(packets.BuildUpdateZombiePacket(zombie.ToBytes()))
+						}
+					}
+
+					goto endattackattempt
+				}
+			}
+
+			for _, otherPlayer := range gs.Players {
+
+				// Suicide watch
+				if otherPlayer.ID == player.ID {
+					continue
+				}
+
+				xdist := otherPlayer.X - player.X
+				ydist := otherPlayer.Y - player.Y
+
+				// Must be on an adjacent or the same tile
+				// Diagonal works too
+				if xdist*xdist <= 1 && ydist*ydist <= 1 {
+					player.LastAttackTime = time.Now()
+					otherPlayer.HP -= player.ST
+
+					msg2 := fmt.Sprintf("You struck %s for %d HP", otherPlayer.Username, player.ST)
+					player.Conn.Write(packets.BuildMessagePacket(-1, msg2))
+
+					msg := fmt.Sprintf("You were struck by %s for %d HP", player.Username, player.ST)
+					otherPlayer.Conn.Write(packets.BuildMessagePacket(-1, msg))
+
+					if otherPlayer.HP <= 0 {
+						msg := fmt.Sprintf("You struck down %s", otherPlayer.Username)
+						player.Conn.Write(packets.BuildMessagePacket(-1, msg))
+
+						msg2 := fmt.Sprintf("YOU WERE STRUCK DOWN BY %s", player.Username)
+						otherPlayer.Conn.Write(packets.BuildMessagePacket(-1, msg2))
+
+						// TODO - Drop stuff and do a respawn
+						otherPlayer.X = 0
+						otherPlayer.Y = 0
+						otherPlayer.Gold = 0
+						otherPlayer.HP = 10
+					}
+
+					// send update to all players
+					for _, player := range gs.Players {
+						player.Conn.Write(packets.BuildUpdatePlayerPacket(otherPlayer.ToBytes()))
+					}
+
+					goto endattackattempt
+				}
+			}
+
+		endattackattempt:
+			continue
+		}
+	}
+}
+
 func (gs *GameState) UseItem(p *Player, itemID int64) {
 	for _, item := range p.Inventory.Items {
 		if item.GetID() == itemID {
@@ -205,66 +404,8 @@ func (gs *GameState) UseItem(p *Player, itemID int64) {
 func (gs *GameState) RunGameLoop() {
 	for {
 		dt := time.Duration((1.0 / float64(gs.TPS)) * 1000)
-
-		// update zombie
-		gs.Mutex.Lock()
-		for _, z := range gs.Zombies {
-			// handle movement
-			doesMove := util.RandomIntBetween(0, 10) < 2
-			if doesMove {
-				// If not currently following a player, pick one
-				if z.FollowingPlayerId == -1 {
-					for _, player := range gs.Players {
-						if util.Distance(z.X, z.Y, player.X, player.Y) < ZOMBIE_FOLLOW_RANGE {
-							z.FollowingPlayerId = player.ID
-						}
-					}
-				}
-
-				// If we are now following a player, move towards it
-				if z.FollowingPlayerId != -1 {
-					followingPlayer := gs.Players[z.FollowingPlayerId]
-					if z == nil || followingPlayer == nil {
-						continue
-					}
-					// Follow player if close enough
-					if util.Distance(z.X, z.Y, followingPlayer.X, followingPlayer.Y) < ZOMBIE_FOLLOW_RANGE {
-						direction := util.RandomIntBetween(0, 2)
-						if direction == 0 {
-							xDist := followingPlayer.X - z.X
-							if xDist*xDist > 0 { // Just checking for positive magnitude
-								z.X += xDist / int64(math.Abs(float64(xDist)))
-							}
-						} else {
-							yDist := followingPlayer.Y - z.Y
-							if yDist*yDist > 0 { // Just checking for positive magnitude
-								z.Y += yDist / int64(math.Abs(float64(yDist)))
-							}
-						}
-					} else { // Lose track of the player if it is too far
-						z.FollowingPlayerId = -1
-					}
-				} else { // otherwise randomly move
-					randomDirection := util.RandomIntBetween(0, 4)
-					if randomDirection == 0 {
-						z.Y--
-					} else if randomDirection == 1 {
-						z.Y++
-					} else if randomDirection == 2 {
-						z.X--
-					} else if randomDirection == 3 {
-						z.X++
-					}
-				}
-
-				// send zombie updates to all players
-				for _, otherPlayer := range gs.Players {
-					otherPlayer.Conn.Write(packets.BuildUpdateZombiePacket(z.ToBytes()))
-				}
-
-			}
-		}
-		gs.Mutex.Unlock()
+		gs.UpdateCombat()
+		gs.UpdateZombies()
 
 		time.Sleep(dt * time.Millisecond)
 	}
