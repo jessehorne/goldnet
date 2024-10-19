@@ -48,13 +48,16 @@ func (m *World) Draw(screen tcell.Screen, x, y, width, height int) {
 	for _, c := range m.Chunks {
 		startX := c.X * game.CHUNK_W
 		startY := c.Y * game.CHUNK_H
-		for yy := int64(0); yy < game.CHUNK_H; yy++ {
-			for xx := int64(0); xx < game.CHUNK_W; xx++ {
-				bx := m.OffsetX + int(startX+xx)
-				by := m.OffsetY + int(startY+yy)
+		for blockY := int64(0); blockY < game.CHUNK_H; blockY++ {
+			for blockX := int64(0); blockX < game.CHUNK_W; blockX++ {
+				bx := m.OffsetX + int(startX+blockX)
+				by := m.OffsetY + int(startY+blockY)
+
+				// make sure we aren't drawing out of bounds
 				if bx > 0 && bx < width && by > 0 && by < 26 {
-					b := c.Below[yy][xx]
-					screen.SetContent(bx, by, shared.GetTerrainAbove(c.Above[yy][xx]), nil, shared.GetTerrainBlock(b))
+					top := c.GetTopBlock(blockX, blockY)
+					bottom := c.Stack[blockY][blockX][0]
+					screen.SetContent(bx, by, rune(top), nil, shared.GetTerrainStyle(bottom))
 				}
 			}
 		}

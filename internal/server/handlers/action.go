@@ -30,8 +30,8 @@ func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data
 	if packets.IsMovementAction(action) {
 		mod := (1 / float64(p.Speed)) * 1000
 
-		b := gs.GetBelowBlockAtCoords(p.X, p.Y)
-		if shared.GetTerrainBelow(b) == shared.TerrainWater {
+		b := gs.GetTerrainAtCoords(p.X, p.Y)
+		if b == shared.TerrainWater {
 			mod = mod * 4
 		}
 

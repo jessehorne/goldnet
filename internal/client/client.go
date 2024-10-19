@@ -61,7 +61,7 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 			return event
 		}
 
-		// handle inventory movement
+		// handle inventory
 		if event.Key() == tcell.KeyPgUp {
 			if c.GUI.Sidebar.InventoryCursor > 0 {
 				c.GUI.Sidebar.InventoryCursor--
@@ -87,6 +87,14 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 			}
 		}
 
+		// handle chat
+		if event.Rune() == 't' {
+			c.GUI.World.Focused = false
+			c.GUI.Input.Focused = true
+			c.App.SetFocus(c.GUI.Input.Root)
+			return nil
+		}
+
 		// determine if movement or something else
 		isMovement := util.IsRuneMovementKey(event.Rune())
 		if !isMovement {
@@ -109,8 +117,8 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 		// it is movement, so handle movement
 		mod := (1 / float64(p.Speed)) * 1000
 
-		b := c.GameState.GetBelowBlockAtCoords(p.X, p.Y)
-		if shared.GetTerrainBelow(b) == shared.TerrainWater {
+		b := c.GameState.GetTerrainAtCoords(p.X, p.Y)
+		if b == shared.TerrainWater {
 			mod = mod * 4
 		}
 
@@ -157,15 +165,6 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 				c.Conn.Write(packets.BuildUserMovePacket(sharedPackets.ActionMoveDown))
 				p.LastMovementTime = time.Now()
 			}
-		case 't':
-			if c.GUI.World.Focused {
-				c.GUI.World.Focused = false
-				c.GUI.Input.Focused = true
-				i := c.GUI.Input.Root.GetFormItemByLabel("> ").(*tview.InputField)
-				i.SetText("")
-				c.App.SetFocus(c.GUI.Input.Root)
-				return nil
-			}
 		}
 	} else if c.GUI.Input.Focused {
 		switch event.Key() {
@@ -173,8 +172,6 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 			c.GUI.World.Focused = true
 			c.GUI.Input.Focused = false
 			c.App.SetFocus(c.GUI.World.Root)
-			i := c.GUI.Input.Root.GetFormItemByLabel("> ").(*tview.InputField)
-			i.SetText("")
 			return event
 		case tcell.KeyEnter:
 			c.GUI.World.Focused = true
