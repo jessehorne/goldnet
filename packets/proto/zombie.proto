@@ -1,0 +1,20 @@
+syntax = "proto3";
+package packets;
+
+option go_package = "dist;packets";
+
+message UpdateZombie{
+  int32 type = 1;
+  int64 id = 2;
+  int64 x = 3;
+  int64 y = 4;
+  int64 hp = 5;
+  int64 damage = 6;
+  int64 goldDrop = 7;
+  int64 followingPlayerId = 8;
+}
+
+message RemoveZombie{
+  int32 type = 1;
+  int64 id = 2;
+}

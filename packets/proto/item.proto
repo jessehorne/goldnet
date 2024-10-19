@@ -1,0 +1,9 @@
+syntax = "proto3";
+package packets;
+
+option go_package = "dist;packets";
+
+message UseItem{
+  int32 type = 1;
+  int64 id = 2;
+}
