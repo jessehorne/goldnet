@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"github.com/jessehorne/goldnet/internal/shared"
 	"log"
 	"math"
 	"os"
@@ -117,7 +118,7 @@ func (gs *GameState) GetChunkAtCoords(x, y int64) *Chunk {
 	return c
 }
 
-func (gs *GameState) GetBelowBlockAtCoords(x, y int64) byte {
+func (gs *GameState) GetTerrainAtCoords(x, y int64) byte {
 	c := gs.GetChunkAtCoords(x, y)
 	if c == nil {
 		return 0
@@ -130,17 +131,7 @@ func (gs *GameState) GetBelowBlockAtCoords(x, y int64) byte {
 	if modY < 0 {
 		modY = 8 - -(modY)
 	}
-	return c.GetBelowBlock(modX, modY)
-}
-
-func (gs *GameState) GetAboveBlockAtCoords(x, y int64) byte {
-	c := gs.GetChunkAtCoords(x, y)
-	if c == nil {
-		return 0
-	}
-	modX := x - (x / 8)
-	modY := y - (y / 8)
-	return c.GetAboveBlock(modX, modY)
+	return shared.GetTerrainType(c.Stack[modY][modX][0])
 }
 
 func (gs *GameState) GetChunksAroundPlayer(p *Player) ([]*Chunk, []*Chunk) {

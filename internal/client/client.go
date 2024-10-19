@@ -109,8 +109,8 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 		// it is movement, so handle movement
 		mod := (1 / float64(p.Speed)) * 1000
 
-		b := c.GameState.GetBelowBlockAtCoords(p.X, p.Y)
-		if shared.GetTerrainBelow(b) == shared.TerrainWater {
+		b := c.GameState.GetTerrainAtCoords(p.X, p.Y)
+		if b == shared.TerrainWater {
 			mod = mod * 4
 		}
 
