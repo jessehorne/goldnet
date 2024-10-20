@@ -1,19 +1,43 @@
 package handlers
 
 import (
+	"fmt"
+	"github.com/jessehorne/goldnet/internal/shared"
+	"github.com/jessehorne/goldnet/internal/util"
+	packets "github.com/jessehorne/goldnet/packets/dist"
+	"google.golang.org/protobuf/proto"
 	"net"
 
-	packets2 "github.com/jessehorne/goldnet/internal/client/packets"
 	"github.com/jessehorne/goldnet/internal/game"
-	"github.com/jessehorne/goldnet/internal/shared/packets"
 )
 
 func ServerMessageHandler(gs *game.GameState, playerID int64, conn net.Conn, data []byte) {
-	msg := packets2.ParseSendMessagePacket(data)
-	for _, p := range gs.Players {
-		if p == nil {
+	var messageFromPlayer packets.Message
+	err := proto.Unmarshal(data, &messageFromPlayer)
+	if err != nil {
+		gs.Logger.Println(err)
+		return
+	}
+
+	p := gs.GetPlayer(playerID)
+	if p == nil {
+		gs.Logger.Println("failed to send message because player doesn't exist in gamestate")
+		return
+	}
+
+	msgPacket := &packets.Message{
+		Type: shared.PacketSendMessage,
+		Data: fmt.Sprintf("%s - %s", p.Username, messageFromPlayer.Data),
+	}
+	msgData, perr := proto.Marshal(msgPacket)
+	if perr != nil {
+		gs.Logger.Println(perr)
+		return
+	}
+	for _, pl := range gs.Players {
+		if pl == nil {
 			return
 		}
-		p.Conn.Write(packets.BuildMessagePacket(playerID, msg))
+		util.Send(pl.Conn, msgData)
 	}
 }

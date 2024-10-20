@@ -1,0 +1,10 @@
+syntax = "proto3";
+package packets;
+
+option go_package = "dist;packets";
+
+message SetHostile{
+  int32 type = 1;
+  int64 playerID = 2;
+  bool hostile = 3;
+}

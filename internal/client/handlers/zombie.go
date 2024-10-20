@@ -1,43 +1,39 @@
 package handlers
 
 import (
+	packets "github.com/jessehorne/goldnet/packets/dist"
+	"google.golang.org/protobuf/proto"
 	"net"
 
 	"github.com/jessehorne/goldnet/internal/client/gui"
 	"github.com/jessehorne/goldnet/internal/game"
-	"github.com/jessehorne/goldnet/internal/util"
 )
 
 func ClientUpdateZombieHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []byte) {
-	c := 0
-	id := util.BytesToInt64(data[c : c+8])
-	c += 8
-	x := util.BytesToInt64(data[c : c+8])
-	c += 8
-	y := util.BytesToInt64(data[c : c+8])
-	c += 8
-	hp := util.BytesToInt64(data[c : c+8])
-	c += 8
-	dmg := util.BytesToInt64(data[c : c+8])
-	c += 8
-	gold := util.BytesToInt64(data[c : c+8])
-	c += 8
-	followingPlayerId := util.BytesToInt64(data[c : c+8])
-	c += 8
-	newZombie := &game.Zombie{
-		ID:                id,
-		X:                 x,
-		Y:                 y,
-		HP:                hp,
-		Damage:            dmg,
-		GoldDropAmt:       gold,
-		FollowingPlayerId: followingPlayerId,
+	var z packets.UpdateZombie
+	err := proto.Unmarshal(data, &z)
+	if err != nil {
+		gs.Logger.Println("couldn't unmarshal update zombie packet")
+		return
 	}
-	gs.Zombies[id] = newZombie
+	newZombie := &game.Zombie{
+		ID:                z.Id,
+		X:                 z.X,
+		Y:                 z.Y,
+		HP:                z.Hp,
+		Damage:            z.Damage,
+		GoldDropAmt:       z.GoldDrop,
+		FollowingPlayerId: z.FollowingPlayerId,
+	}
+	gs.Zombies[z.Id] = newZombie
 }
 
 func ClientRemoveZombieHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []byte) {
-	c := 0
-	id := util.BytesToInt64(data[c : c+8])
-	delete(gs.Zombies, id)
+	var rz packets.RemoveZombie
+	err := proto.Unmarshal(data, &rz)
+	if err != nil {
+		gs.Logger.Println("couldn't unmarshal remove zombie packet")
+		return
+	}
+	delete(gs.Zombies, rz.Id)
 }

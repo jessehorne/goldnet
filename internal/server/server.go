@@ -7,6 +7,9 @@ import (
 	"github.com/jessehorne/goldnet/internal/game"
 	"github.com/jessehorne/goldnet/internal/server/handlers"
 	"github.com/jessehorne/goldnet/internal/util"
+	packets "github.com/jessehorne/goldnet/packets/dist"
+	"google.golang.org/protobuf/proto"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -79,37 +82,30 @@ func (s *Server) HandleConnection(conn net.Conn, handler *handlers.PacketHandler
 	reader := bufio.NewReader(conn)
 	playerID := s.GameState.NextPlayerID()
 	for {
-		// first 8 bytes (int64) is how large this packet is in bytes
-		var sizeBytes []byte
-		for i := 0; i < 8; i++ {
-			b, err := reader.ReadByte()
-			if err != nil {
-				handlers.ServerUserDisconnectedHandler(s.GameState, playerID, conn, nil)
-				return
-			}
-			sizeBytes = append(sizeBytes, b)
+		lenBytes := make([]byte, 8)
+		_, err := io.ReadFull(reader, lenBytes)
+		if err != nil {
+			handlers.ServerUserDisconnectedHandler(s.GameState, playerID, conn, nil)
+			break
 		}
 
-		if len(sizeBytes) != 8 {
-			continue
+		msgLen := util.BytesToInt64(lenBytes)
+		msgBytes := make([]byte, msgLen)
+		_, err = io.ReadFull(reader, msgBytes)
+		if err != nil {
+			handlers.ServerUserDisconnectedHandler(s.GameState, playerID, conn, nil)
+			break
 		}
 
-		// convert size to int64
-		size := util.BytesToInt64(sizeBytes)
-
-		// read that many bytes which is the packet
-		var data []byte
-		for i := int64(0); i < size; i++ {
-			b, err := reader.ReadByte()
-			if err != nil {
-				handlers.ServerUserDisconnectedHandler(s.GameState, playerID, conn, nil)
-				return
-			}
-			data = append(data, b)
+		msg := packets.Raw{}
+		err = proto.Unmarshal(msgBytes, &msg)
+		if err != nil {
+			handlers.ServerUserDisconnectedHandler(s.GameState, playerID, conn, nil)
+			break
 		}
 
 		// handle the packet and start over
-		handler.Handle(playerID, conn, data)
+		handler.Handle(playerID, conn, &msg, msgBytes)
 	}
 }
 

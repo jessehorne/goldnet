@@ -2,6 +2,9 @@ package client
 
 import (
 	"bufio"
+	packets "github.com/jessehorne/goldnet/packets/dist"
+	"google.golang.org/protobuf/proto"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -10,10 +13,8 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/jessehorne/goldnet/internal/client/gui"
 	"github.com/jessehorne/goldnet/internal/client/handlers"
-	"github.com/jessehorne/goldnet/internal/client/packets"
 	"github.com/jessehorne/goldnet/internal/game"
 	"github.com/jessehorne/goldnet/internal/shared"
-	sharedPackets "github.com/jessehorne/goldnet/internal/shared/packets"
 	"github.com/jessehorne/goldnet/internal/util"
 	"github.com/rivo/tview"
 )
@@ -82,7 +83,16 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 			n, _ := c.GUI.Sidebar.Pages.GetFrontPage()
 			if n == "inventory" {
 				if len(p.Inventory.Items) > 0 {
-					c.Conn.Write(packets.BuildUseItemPacket(int64(c.GUI.Sidebar.InventoryCursor)))
+					useItem := &packets.UseItem{
+						Type: shared.PacketUseItem,
+						Id:   int64(c.GUI.Sidebar.InventoryCursor),
+					}
+					useItemData, useItemErr := proto.Marshal(useItem)
+					if useItemErr != nil {
+						c.GameState.Logger.Println("couldn't marshal use item packet")
+						return event
+					}
+					util.Send(c.Conn, useItemData)
 				}
 			}
 		}
@@ -101,7 +111,18 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 			switch event.Rune() {
 			// Toggle hostile mode
 			case 'e':
-				c.Conn.Write(packets.BuildUserToggleHostilePacket(p.Hostile))
+				p.Hostile = !p.Hostile
+				hp := &packets.SetHostile{
+					Type:     shared.PacketSetHostile,
+					PlayerID: p.ID,
+					Hostile:  p.Hostile,
+				}
+				hpData, hpErr := proto.Marshal(hp)
+				if hpErr != nil {
+					c.GameState.Logger.Println("couldn't marshal move set hostile packet")
+					return event
+				}
+				util.Send(c.Conn, hpData)
 
 			// Handle sidebar input
 			case 'S':
@@ -135,7 +156,18 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 				c.GUI.World.OldOffsetX = c.GUI.World.OffsetX
 				c.GUI.World.OffsetX++
 				p.OldChunkX = p.X / 8
-				c.Conn.Write(packets.BuildUserMovePacket(sharedPackets.ActionMoveLeft))
+
+				um := &packets.Move{
+					Type:   shared.PacketAction,
+					Action: shared.ActionMoveLeft,
+				}
+				umData, umErr := proto.Marshal(um)
+				if umErr != nil {
+					c.GameState.Logger.Println("couldn't marshal move left")
+					return event
+				}
+				util.Send(c.Conn, umData)
+
 				p.LastMovementTime = time.Now()
 			}
 		case 'd':
@@ -144,7 +176,18 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 				c.GUI.World.OffsetX--
 				c.GUI.World.OldOffsetX = c.GUI.World.OffsetX
 				p.OldChunkX = p.X / 8
-				c.Conn.Write(packets.BuildUserMovePacket(sharedPackets.ActionMoveRight))
+
+				um := &packets.Move{
+					Type:   shared.PacketAction,
+					Action: shared.ActionMoveRight,
+				}
+				umData, umErr := proto.Marshal(um)
+				if umErr != nil {
+					c.GameState.Logger.Println("couldn't marshal move right")
+					return event
+				}
+				util.Send(c.Conn, umData)
+
 				p.LastMovementTime = time.Now()
 			}
 		case 'w':
@@ -153,7 +196,18 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 				c.GUI.World.OffsetY++
 				c.GUI.World.OldOffsetY = c.GUI.World.OffsetY
 				p.OldChunkY = p.Y / 8
-				c.Conn.Write(packets.BuildUserMovePacket(sharedPackets.ActionMoveUp))
+
+				um := &packets.Move{
+					Type:   shared.PacketAction,
+					Action: shared.ActionMoveUp,
+				}
+				umData, umErr := proto.Marshal(um)
+				if umErr != nil {
+					c.GameState.Logger.Println("couldn't marshal move up")
+					return event
+				}
+				util.Send(c.Conn, umData)
+
 				p.LastMovementTime = time.Now()
 			}
 		case 's':
@@ -162,7 +216,17 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 				c.GUI.World.OffsetY--
 				c.GUI.World.OldOffsetY = c.GUI.World.OffsetY
 				p.OldChunkY = p.Y / 8
-				c.Conn.Write(packets.BuildUserMovePacket(sharedPackets.ActionMoveDown))
+
+				um := &packets.Move{
+					Type:   shared.PacketAction,
+					Action: shared.ActionMoveDown,
+				}
+				umData, umErr := proto.Marshal(um)
+				if umErr != nil {
+					c.GameState.Logger.Println("couldn't marshal move down")
+					return event
+				}
+				util.Send(c.Conn, umData)
 				p.LastMovementTime = time.Now()
 			}
 		}
@@ -182,7 +246,16 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 			i.SetText("")
 
 			if len(msg) > 0 {
-				c.Conn.Write(packets.BuildSendMessagePacket(msg))
+				sm := &packets.Message{
+					Type: shared.PacketSendMessage,
+					Data: msg,
+				}
+				smData, smErr := proto.Marshal(sm)
+				if smErr != nil {
+					c.GameState.Logger.Println(smErr)
+					return event
+				}
+				util.Send(c.Conn, smData)
 			}
 			return event
 		}
@@ -192,40 +265,50 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 
 func (c *Client) Listen() {
 	handler := handlers.NewPacketHandler(c.GameState)
-	c.Conn.Write(packets.BuildUserJoinPacket())
+
+	uj := &packets.Join{
+		Ptype: shared.PacketUserJoin,
+	}
+	ujData, ujErr := proto.Marshal(uj)
+	if ujErr != nil {
+		c.GameState.Logger.Println("couldn't marshal initial user join packet")
+		return
+	}
+	util.Send(c.Conn, ujData)
+
 	go func() {
 		for {
-			// first 8 bytes (int64) is how large this packet is in bytes
-			var sizeBytes []byte
-			for i := 0; i < 8; i++ {
-				b, err := c.Reader.ReadByte()
-				if err != nil {
-					continue
-				}
-				sizeBytes = append(sizeBytes, b)
-			}
-
-			if len(sizeBytes) != 8 {
+			lenBytes := make([]byte, 8)
+			_, err := io.ReadFull(c.Reader, lenBytes)
+			if err != nil {
 				continue
 			}
 
-			// read that many bytes which is the packet
-			size := util.BytesToInt64(sizeBytes)
-			var data []byte
-			for i := int64(0); i < size; i++ {
-				b, err := c.Reader.ReadByte()
-				if err != nil {
-					continue
-				}
-				data = append(data, b)
+			msgLen := util.BytesToInt64(lenBytes)
+			msgBytes := make([]byte, msgLen)
+			io.ReadFull(c.Reader, msgBytes)
+
+			msg := packets.Raw{}
+			err = proto.Unmarshal(msgBytes, &msg)
+			if err != nil {
+				continue
 			}
-			handler.Handle(c.GUI, c.Conn, data)
+
+			handler.Handle(c.GUI, c.Conn, &msg, msgBytes)
 		}
 	}()
 }
 
 func (c *Client) Close() {
-	c.Conn.Write(packets.BuildUserLeavePacket())
+	ul := &packets.Leave{
+		Type: shared.PacketUserLeave,
+	}
+	ulData, ulErr := proto.Marshal(ul)
+	if ulErr != nil {
+		c.GameState.Logger.Println("couldn't marshal user leave packet")
+		return
+	}
+	util.Send(c.Conn, ulData)
 	c.Conn.Close()
 	c.App.Stop()
 }

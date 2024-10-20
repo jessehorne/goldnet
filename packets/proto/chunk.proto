@@ -1,0 +1,9 @@
+syntax = "proto3";
+package packets;
+
+option go_package = "dist;packets";
+
+message Chunks{
+  int32 type = 1;
+  bytes data = 2;
+}

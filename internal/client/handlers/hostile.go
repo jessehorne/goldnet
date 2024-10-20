@@ -1,17 +1,23 @@
 package handlers
 
 import (
+	packets "github.com/jessehorne/goldnet/packets/dist"
+	"google.golang.org/protobuf/proto"
 	"net"
 
 	"github.com/jessehorne/goldnet/internal/client/gui"
 	"github.com/jessehorne/goldnet/internal/game"
-	"github.com/jessehorne/goldnet/internal/shared/packets"
 )
 
 func ClientPlayerToggleHostileHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []byte) {
-	id, hostile := packets.ParseSetHostilePacket(data)
+	var shp packets.SetHostile
+	err := proto.Unmarshal(data, &shp)
+	if err != nil {
+		gs.Logger.Println("couldn't unmarshal set hostile packet")
+		return
+	}
 
 	gs.Mutex.Lock()
-	gs.Players[id].Hostile = hostile
+	gs.Players[shp.PlayerID].Hostile = shp.Hostile
 	gs.Mutex.Unlock()
 }

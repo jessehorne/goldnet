@@ -1,0 +1,8 @@
+syntax = "proto3";
+package packets;
+
+option go_package = "dist;packets";
+
+message Raw{
+  int32 type = 1;
+}
