@@ -1,41 +1,41 @@
 package handlers
 
 import (
+	"github.com/jessehorne/goldnet/internal/shared"
+	packets "github.com/jessehorne/goldnet/packets/dist"
 	"net"
 
 	"github.com/jessehorne/goldnet/internal/client/gui"
 	"github.com/jessehorne/goldnet/internal/game"
-	"github.com/jessehorne/goldnet/internal/shared/packets"
 )
 
 type Handler func(g *gui.GUI, gs *game.GameState, conn net.Conn, p []byte)
 
 type PacketHandler struct {
 	GameState *game.GameState
-	Handlers  map[byte]Handler
+	Handlers  map[int32]Handler
 }
 
 func NewPacketHandler(gs *game.GameState) *PacketHandler {
 	return &PacketHandler{
 		GameState: gs,
-		Handlers: map[byte]Handler{
-			packets.PacketPlayerJoined:        ClientPlayerJoinedHandler,
-			packets.PacketPlayerSelfJoined:    ClientPlayerSelfJoinedHandler,
-			packets.PacketPlayerDisconnected:  ClientPlayerDisconnectedHandler,
-			packets.PacketPlayerToggleHostile: ClientPlayerToggleHostileHandler,
-			packets.PacketChunks:              ClientChunksHandler,
-			packets.PacketSendMessage:         ClientMessageHandler,
-			packets.PacketUpdatePlayer:        ClientUpdatePlayerHandler,
-			packets.PacketUpdateZombie:        ClientUpdateZombieHandler,
-			packets.PacketRemoveZombie:        ClientRemoveZombieHandler,
+		Handlers: map[int32]Handler{
+			shared.PacketPlayerJoined:       ClientPlayerJoinedHandler,
+			shared.PacketPlayerSelfJoined:   ClientPlayerSelfJoinedHandler,
+			shared.PacketPlayerDisconnected: ClientPlayerDisconnectedHandler,
+			shared.PacketSetHostile:         ClientPlayerToggleHostileHandler,
+			shared.PacketChunks:             ClientChunksHandler,
+			shared.PacketSendMessage:        ClientMessageHandler,
+			shared.PacketUpdatePlayer:       ClientUpdatePlayerHandler,
+			shared.PacketUpdateZombie:       ClientUpdateZombieHandler,
+			shared.PacketRemoveZombie:       ClientRemoveZombieHandler,
 		},
 	}
 }
 
-func (h *PacketHandler) Handle(g *gui.GUI, conn net.Conn, data []byte) {
-	raw := packets.NewRawPacket(data)
-	handler, ok := h.Handlers[raw.Type]
+func (h *PacketHandler) Handle(g *gui.GUI, conn net.Conn, msg *packets.Raw, data []byte) {
+	handler, ok := h.Handlers[msg.Type]
 	if ok {
-		handler(g, h.GameState, conn, raw.Data)
+		handler(g, h.GameState, conn, data)
 	}
 }

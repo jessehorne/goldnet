@@ -7,6 +7,7 @@ require (
 	github.com/gdamore/tcell/v2 v2.7.1
 	github.com/joho/godotenv v1.5.1
 	github.com/rivo/tview v0.0.0-20240921122403-a64fc48d7654
+	google.golang.org/protobuf v1.35.1
 )
 
 require (

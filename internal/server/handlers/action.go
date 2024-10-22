@@ -1,33 +1,30 @@
 package handlers
 
 import (
+	packets "github.com/jessehorne/goldnet/packets/dist"
+	"google.golang.org/protobuf/proto"
 	"net"
 	"time"
 
 	"github.com/jessehorne/goldnet/internal/game"
 	"github.com/jessehorne/goldnet/internal/shared"
-	"github.com/jessehorne/goldnet/internal/shared/packets"
 	"github.com/jessehorne/goldnet/internal/util"
 )
 
 func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data []byte) {
-	action := data[0]
+	var action packets.Action
+	err := proto.Unmarshal(data, &action)
+	if err != nil {
+		gs.Logger.Println(err)
+		return
+	}
 
 	p := gs.GetPlayer(playerID)
 	if p == nil {
 		return
 	}
 
-	if action == packets.ActionToggleHostile {
-		p.Hostile = !p.Hostile
-		gs.Logger.Println("Toggled Hostile")
-		for _, player := range gs.Players {
-			setHostilePacket := packets.BuildSetHostilePacket(p.ID, p.Hostile)
-			player.Conn.Write(setHostilePacket)
-		}
-	}
-
-	if packets.IsMovementAction(action) {
+	if shared.IsMovementAction(action.Action) {
 		mod := (1 / float64(p.Speed)) * 1000
 
 		b := gs.GetTerrainAtCoords(p.X, p.Y)
@@ -45,18 +42,53 @@ func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data
 		if canMove {
 			p.LastMovementTime = time.Now()
 
-			gs.HandlePlayerAction(p, action)
+			gs.HandlePlayerAction(p, action.Action)
 
 			// send the updated position to the player
-			conn.Write(packets.BuildUpdatePlayerPacket(p.ToBytes()))
+			upp := &packets.UpdatePlayer{
+				Type:      shared.PacketUpdatePlayer,
+				Id:        p.ID,
+				Username:  p.Username,
+				X:         p.X,
+				Y:         p.Y,
+				Gold:      p.Gold,
+				Hp:        p.HP,
+				St:        p.ST,
+				Hostile:   p.Hostile,
+				Inventory: p.Inventory.ToBytes(),
+			}
+			uppData, uppDataErr := proto.Marshal(upp)
+			if uppDataErr != nil {
+				gs.Logger.Println(uppDataErr)
+				return
+			}
+			util.Send(conn, uppData)
 
 			// send movement to other nearby players
 			nearbyPlayers := gs.GetPlayersAroundPlayer(p)
 			for _, other := range nearbyPlayers {
-				other.Conn.Write(packets.BuildUpdatePlayerPacket(p.ToBytes()))
+				util.Send(other.Conn, uppData)
 			}
 		} else {
-			conn.Write(packets.BuildUpdatePlayerPacket(p.ToBytes()))
+			// send the updated position to the player
+			upp := &packets.UpdatePlayer{
+				Type:      shared.PacketUpdatePlayer,
+				Id:        p.ID,
+				Username:  p.Username,
+				X:         p.X,
+				Y:         p.Y,
+				Gold:      p.Gold,
+				Hp:        p.HP,
+				St:        p.ST,
+				Hostile:   p.Hostile,
+				Inventory: p.Inventory.ToBytes(),
+			}
+			uppData, uppDataErr := proto.Marshal(upp)
+			if uppDataErr != nil {
+				gs.Logger.Println(uppDataErr)
+				return
+			}
+			util.Send(conn, uppData)
 		}
 
 		// send chunks if players chunk has updated
@@ -76,20 +108,75 @@ func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data
 					gs.Zombies[newZombie.ID] = newZombie
 
 					// send new zombie to all players
-					zombieBytes := newZombie.ToBytes()
-					newZombiePacket := packets.BuildUpdateZombiePacket(zombieBytes)
+					zPacket := &packets.UpdateZombie{
+						Type:              shared.PacketUpdateZombie,
+						Id:                newZombie.ID,
+						X:                 newZombie.X,
+						Y:                 newZombie.Y,
+						Hp:                newZombie.HP,
+						Damage:            newZombie.Damage,
+						GoldDrop:          newZombie.GoldDropAmt,
+						FollowingPlayerId: newZombie.FollowingPlayerId,
+					}
+					zData, zerr := proto.Marshal(zPacket)
+					if zerr != nil {
+						gs.Logger.Println(zerr)
+						continue
+					}
 					for _, otherPlayer := range gs.Players {
-						otherPlayer.Conn.Write(newZombiePacket)
+						util.Send(otherPlayer.Conn, zData)
 					}
 				}
 			}
 
-			var chunkData []byte
+			chunkData := util.Int64ToBytes(int64(len(nearbyChunks)))
 			for _, c := range nearbyChunks {
 				chunkData = append(chunkData, c.ToBytes()...)
 			}
-			chunkPacket := packets.BuildChunksPacket(int64(len(nearbyChunks)), chunkData)
-			conn.Write(chunkPacket)
+
+			chunksPacket := &packets.Chunks{
+				Type: shared.PacketChunks,
+				Data: chunkData,
+			}
+			chunksPacketData, chunksPacketErr := proto.Marshal(chunksPacket)
+			if chunksPacketErr != nil {
+				gs.Logger.Println(chunksPacketErr)
+				return
+			}
+
+			util.Send(conn, chunksPacketData)
 		}
+	}
+}
+
+func ServerSetHostileHandler(gs *game.GameState, playerID int64, conn net.Conn, data []byte) {
+	var sh packets.SetHostile
+	err := proto.Unmarshal(data, &sh)
+	if err != nil {
+		gs.Logger.Println(err)
+		return
+	}
+
+	p := gs.GetPlayer(playerID)
+	if p == nil {
+		return
+	}
+
+	p.Hostile = sh.Hostile
+
+	gs.Logger.Println("Toggled Hostile")
+
+	for _, player := range gs.Players {
+		setHostile := &packets.SetHostile{
+			Type:     shared.PacketSetHostile,
+			PlayerID: p.ID,
+			Hostile:  p.Hostile,
+		}
+		setHostileData, setHostileDataErr := proto.Marshal(setHostile)
+		if setHostileDataErr != nil {
+			gs.Logger.Println(err)
+			continue
+		}
+		util.Send(player.Conn, setHostileData)
 	}
 }

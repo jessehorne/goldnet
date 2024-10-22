@@ -1,7 +1,7 @@
-package packets
+package shared
 
 const (
-	PacketUserJoin byte = iota
+	PacketUserJoin int32 = iota
 	PacketUserLeave
 	PacketAction
 	PacketSendMessage
@@ -14,11 +14,12 @@ const (
 	PacketUpdateZombie
 	PacketRemoveZombie
 	PacketUseItem
+	PacketSetHostile
 )
 
 const (
 	// Actions
-	ActionMoveUp byte = iota
+	ActionMoveUp int32 = iota
 	ActionMoveDown
 	ActionMoveLeft
 	ActionMoveRight
@@ -26,7 +27,7 @@ const (
 )
 
 var (
-	MovementActions = []byte{ActionMoveUp, ActionMoveDown, ActionMoveLeft, ActionMoveRight}
+	MovementActions = []int32{ActionMoveUp, ActionMoveDown, ActionMoveLeft, ActionMoveRight}
 )
 
 type RawPacket struct {
@@ -49,7 +50,7 @@ func (p *RawPacket) ToBytes() []byte {
 	return append([]byte{p.Type}, p.Data...)
 }
 
-func IsMovementAction(a byte) bool {
+func IsMovementAction(a int32) bool {
 	for _, k := range MovementActions {
 		if a == k {
 			return true
