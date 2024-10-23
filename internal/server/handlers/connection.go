@@ -2,12 +2,14 @@ package handlers
 
 import (
 	"fmt"
+	"net"
+
 	"github.com/jessehorne/goldnet/internal/shared"
 	"github.com/jessehorne/goldnet/internal/util"
 	packets "github.com/jessehorne/goldnet/packets/dist"
 	"google.golang.org/protobuf/proto"
-	"net"
 
+	"github.com/jessehorne/goldnet/internal/game/components"
 	"github.com/jessehorne/goldnet/internal/game/inventory"
 
 	"github.com/jessehorne/goldnet/internal/game"
@@ -17,7 +19,8 @@ func ServerUserJoinHandler(gs *game.GameState, playerID int64, conn net.Conn, da
 	gs.Logger.Println("[PACKET] user joined with a ID of", playerID)
 
 	// add player to gamestates list of players
-	newPlayer := game.NewPlayer(playerID, 0, 0, nil, conn)
+	playerId := gs.NextEntityId()
+	newPlayer := components.NewPlayer(playerId, nil, conn)
 	gs.AddPlayer(newPlayer)
 
 	// add a welcome note to the players inventory
@@ -55,13 +58,13 @@ func ServerUserJoinHandler(gs *game.GameState, playerID int64, conn net.Conn, da
 	for _, z := range gs.Zombies {
 		zPacket := &packets.UpdateZombie{
 			Type:              shared.PacketUpdateZombie,
-			Id:                z.ID,
+			Id:                int64(z.ID),
 			X:                 z.X,
 			Y:                 z.Y,
 			Hp:                z.HP,
 			Damage:            z.Damage,
 			GoldDrop:          z.GoldDropAmt,
-			FollowingPlayerId: z.FollowingPlayerId,
+			FollowingPlayerId: int64(z.FollowingPlayerId),
 		}
 		zData, zerr := proto.Marshal(zPacket)
 		if zerr != nil {
@@ -72,21 +75,19 @@ func ServerUserJoinHandler(gs *game.GameState, playerID int64, conn net.Conn, da
 	}
 
 	// let every player know they joined
-	others := []*game.Player{}
+	others := []*components.PlayerComponent{}
 	for _, p := range gs.Players {
 		if p == nil {
 			continue
 		}
-		if p.ID == playerID {
+		if int64(p.ID) == playerID {
 			continue
 		}
 		others = append(others, p)
 
 		pJoined := &packets.PlayerJoined{
 			Type: shared.PacketPlayerJoined,
-			Id:   newPlayer.ID,
-			X:    newPlayer.X,
-			Y:    newPlayer.Y,
+			Id:   int64(newPlayer.ID),
 		}
 		pData, perr := proto.Marshal(pJoined)
 		if perr != nil {
@@ -99,10 +100,8 @@ func ServerUserJoinHandler(gs *game.GameState, playerID int64, conn net.Conn, da
 	var otherPlayers []*packets.UpdatePlayer
 	for _, player := range others {
 		up := &packets.UpdatePlayer{
-			Id:       player.ID,
+			Id:       int64(player.ID),
 			Username: player.Username,
-			X:        player.X,
-			Y:        player.Y,
 			Hp:       player.HP,
 			Hostile:  player.Hostile,
 		}
@@ -113,10 +112,8 @@ func ServerUserJoinHandler(gs *game.GameState, playerID int64, conn net.Conn, da
 	selfUpdate := &packets.SelfJoin{
 		Type: shared.PacketPlayerSelfJoined,
 		Self: &packets.UpdatePlayer{
-			Id:        newPlayer.ID,
+			Id:        int64(newPlayer.ID),
 			Username:  newPlayer.Username,
-			X:         newPlayer.X,
-			Y:         newPlayer.Y,
 			Gold:      newPlayer.Gold,
 			Hp:        newPlayer.HP,
 			St:        newPlayer.ST,
@@ -154,7 +151,7 @@ func ServerUserDisconnectedHandler(gs *game.GameState, playerID int64, conn net.
 	gs.Logger.Println("[PACKET] user disconnected")
 
 	// remove player from gamestate
-	gs.RemovePlayer(playerID)
+	gs.RemovePlayer(components.EntityId(playerID))
 
 	// let everyone know they left
 	dp := &packets.PlayerDisconnected{

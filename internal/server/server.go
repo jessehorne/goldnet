@@ -3,17 +3,18 @@ package server
 import (
 	"bufio"
 	"fmt"
+	"io"
+	"log"
+	"net"
+	"os"
+	"sync"
+
 	"github.com/jessehorne/goldnet/internal/config"
 	"github.com/jessehorne/goldnet/internal/game"
 	"github.com/jessehorne/goldnet/internal/server/handlers"
 	"github.com/jessehorne/goldnet/internal/util"
 	packets "github.com/jessehorne/goldnet/packets/dist"
 	"google.golang.org/protobuf/proto"
-	"io"
-	"log"
-	"net"
-	"os"
-	"sync"
 )
 
 type Server struct {
@@ -80,7 +81,7 @@ func (s *Server) HandleConnection(conn net.Conn, handler *handlers.PacketHandler
 	defer conn.Close()
 	s.Logger.Println("connection made: ", conn.RemoteAddr().String())
 	reader := bufio.NewReader(conn)
-	playerID := s.GameState.NextPlayerID()
+	playerID := int64(s.GameState.NextPlayerID())
 	for {
 		lenBytes := make([]byte, 8)
 		_, err := io.ReadFull(reader, lenBytes)

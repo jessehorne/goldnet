@@ -2,13 +2,14 @@ package client
 
 import (
 	"bufio"
-	packets "github.com/jessehorne/goldnet/packets/dist"
-	"google.golang.org/protobuf/proto"
 	"io"
 	"log"
 	"net"
 	"os"
 	"time"
+
+	packets "github.com/jessehorne/goldnet/packets/dist"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/jessehorne/goldnet/internal/client/gui"
@@ -114,7 +115,7 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 				p.Hostile = !p.Hostile
 				hp := &packets.SetHostile{
 					Type:     shared.PacketSetHostile,
-					PlayerID: p.ID,
+					PlayerID: int64(p.ID),
 					Hostile:  p.Hostile,
 				}
 				hpData, hpErr := proto.Marshal(hp)
@@ -136,9 +137,10 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 		}
 
 		// it is movement, so handle movement
+		position := c.GameState.PositionComponents[p.ID]
 		mod := (1 / float64(p.Speed)) * 1000
 
-		b := c.GameState.GetTerrainAtCoords(p.X, p.Y)
+		b := c.GameState.GetTerrainAtCoords(position.X, position.Y)
 		if b == shared.TerrainWater {
 			mod = mod * 4
 		}
@@ -152,10 +154,10 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Rune() {
 		case 'a':
 			if canMove {
-				p.X--
+				position.X--
 				c.GUI.World.OldOffsetX = c.GUI.World.OffsetX
 				c.GUI.World.OffsetX++
-				p.OldChunkX = p.X / 8
+				p.OldChunkX = position.X / 8
 
 				um := &packets.Move{
 					Type:   shared.PacketAction,
@@ -172,10 +174,10 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 			}
 		case 'd':
 			if canMove {
-				p.X++
+				position.X++
 				c.GUI.World.OffsetX--
 				c.GUI.World.OldOffsetX = c.GUI.World.OffsetX
-				p.OldChunkX = p.X / 8
+				p.OldChunkX = position.X / 8
 
 				um := &packets.Move{
 					Type:   shared.PacketAction,
@@ -192,10 +194,10 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 			}
 		case 'w':
 			if canMove {
-				p.Y--
+				position.Y--
 				c.GUI.World.OffsetY++
 				c.GUI.World.OldOffsetY = c.GUI.World.OffsetY
-				p.OldChunkY = p.Y / 8
+				p.OldChunkY = position.Y / 8
 
 				um := &packets.Move{
 					Type:   shared.PacketAction,
@@ -212,10 +214,10 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 			}
 		case 's':
 			if canMove {
-				p.Y++
+				position.Y++
 				c.GUI.World.OffsetY--
 				c.GUI.World.OldOffsetY = c.GUI.World.OffsetY
-				p.OldChunkY = p.Y / 8
+				p.OldChunkY = position.Y / 8
 
 				um := &packets.Move{
 					Type:   shared.PacketAction,

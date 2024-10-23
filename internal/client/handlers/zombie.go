@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"net"
+
 	packets "github.com/jessehorne/goldnet/packets/dist"
 	"google.golang.org/protobuf/proto"
-	"net"
 
 	"github.com/jessehorne/goldnet/internal/client/gui"
 	"github.com/jessehorne/goldnet/internal/game"
+	"github.com/jessehorne/goldnet/internal/game/components"
 )
 
 func ClientUpdateZombieHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []byte) {
@@ -17,15 +19,15 @@ func ClientUpdateZombieHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, da
 		return
 	}
 	newZombie := &game.Zombie{
-		ID:                z.Id,
+		ID:                components.EntityId(z.Id),
 		X:                 z.X,
 		Y:                 z.Y,
 		HP:                z.Hp,
 		Damage:            z.Damage,
 		GoldDropAmt:       z.GoldDrop,
-		FollowingPlayerId: z.FollowingPlayerId,
+		FollowingPlayerId: components.EntityId(z.FollowingPlayerId),
 	}
-	gs.Zombies[z.Id] = newZombie
+	gs.Zombies[components.EntityId(z.Id)] = newZombie
 }
 
 func ClientRemoveZombieHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []byte) {
@@ -35,5 +37,5 @@ func ClientRemoveZombieHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, da
 		gs.Logger.Println("couldn't unmarshal remove zombie packet")
 		return
 	}
-	delete(gs.Zombies, rz.Id)
+	delete(gs.Zombies, components.EntityId(rz.Id))
 }

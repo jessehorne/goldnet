@@ -2,7 +2,8 @@ package gui
 
 import (
 	"fmt"
-	"github.com/jessehorne/goldnet/internal/game"
+
+	"github.com/jessehorne/goldnet/internal/game/components"
 	"github.com/rivo/tview"
 )
 
@@ -65,7 +66,7 @@ func (s *Sidebar) SetActiveTab(name string) {
 	s.Nav.SetText(tmpl)
 }
 
-func (s *Sidebar) UpdatePlayerStats(p *game.Player) {
+func (s *Sidebar) UpdatePlayerStats(p *components.PlayerComponent) {
 	tmpl := `
 Name: %s
 
@@ -87,7 +88,7 @@ Name: %s
 	))
 }
 
-func (s *Sidebar) UpdatePlayerInventory(p *game.Player) {
+func (s *Sidebar) UpdatePlayerInventory(p *components.PlayerComponent) {
 	tmpl := ``
 
 	for index, item := range p.Inventory.Items {

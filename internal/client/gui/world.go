@@ -63,28 +63,17 @@ func (m *World) Draw(screen tcell.Screen, x, y, width, height int) {
 		}
 	}
 
-	// draw players
-	for _, p := range m.GameState.Players {
-		if p != nil {
-			bx := m.OffsetX + int(p.X)
-			by := m.OffsetY + int(p.Y)
-			if bx > 0 && bx < width && by > 0 && by < 26 {
-				style := tcell.StyleDefault.Foreground(tcell.ColorWhite)
-				if p.Hostile {
-					style = style.Background(tcell.ColorRed)
+	// draw sprites
+	for entityId, sprite := range m.GameState.SpriteComponents {
+		if sprite != nil {
+			entityPosition := m.GameState.PositionComponents[entityId]
+			if entityPosition != nil {
+				bx := m.OffsetX + int(entityPosition.X)
+				by := m.OffsetY + int(entityPosition.Y)
+				if bx > 0 && bx < width && by > 0 && by < 26 {
+					style := tcell.StyleDefault.Foreground(sprite.Foreground).Background(sprite.Background)
+					screen.SetContent(bx, by, sprite.Character, nil, style)
 				}
-				screen.SetContent(bx, by, '@', nil, style)
-			}
-		}
-	}
-
-	// draw zombies
-	for _, z := range m.GameState.Zombies {
-		if z != nil {
-			bx := m.OffsetX + int(z.X)
-			by := m.OffsetY + int(z.Y)
-			if bx > 0 && bx < width && by > 0 && by < 26 {
-				screen.SetContent(bx, by, 'Z', nil, tcell.StyleDefault.Foreground(tcell.ColorWhite))
 			}
 		}
 	}

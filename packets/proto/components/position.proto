@@ -1,0 +1,10 @@
+syntax = "proto3";
+package packets;
+
+option go_package = "./dist/components;packets";
+
+message Position{
+  int64 entityId = 1;
+  int64 x = 2;
+  int64 y = 3;
+}
