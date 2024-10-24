@@ -49,7 +49,7 @@ func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data
 			gs.HandlePlayerAction(p, action.Action)
 
 			upp := &packetscomponents.UpdatePosition{
-				Type:     shared.PacketUpdatePlayer,
+				Type:     shared.PacketUpdatePosition,
 				EntityId: int64(p.ID),
 				X:        position.X,
 				Y:        position.Y,
@@ -69,7 +69,7 @@ func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data
 		} else {
 			// send the updated position to the player
 			upp := &packets.UpdatePlayer{
-				Type:      shared.PacketUpdatePlayer,
+				Type:      shared.PacketUpdatePosition,
 				Id:        int64(p.ID),
 				Username:  p.Username,
 				Gold:      p.Gold,
