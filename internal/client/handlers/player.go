@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net"
 
 	packets "github.com/jessehorne/goldnet/packets/dist"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/jessehorne/goldnet/internal/client/gui"
 	"github.com/jessehorne/goldnet/internal/game"
+	"github.com/jessehorne/goldnet/internal/game/components"
 )
 
 func ClientUpdatePlayerHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []byte) {
@@ -17,11 +19,17 @@ func ClientUpdatePlayerHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, da
 		gs.Logger.Println("couldn't unmarshal update player packet")
 		return
 	}
-	p := gs.GetPlayer(up.Id)
-	p.Gold = up.Gold
-	p.HP = up.Hp
-	p.ST = up.St
-	p.Hostile = up.Hostile
+
+	msg := fmt.Sprintf("Handling update to player %d", up.Id)
+	g.Chat.AddMessage(msg)
+
+	// p.Gold = up.Gold
+	// p.HP = up.Hp
+	// p.ST = up.St
+	// p.Hostile = up.Hostile
+
+	p := components.NewPlayer(components.EntityId(up.Id), up.GetInventory(), nil)
+	gs.Players[components.EntityId(up.Id)] = p
 
 	// gs.MovePlayer(p.ID, p.X, p.Y)
 

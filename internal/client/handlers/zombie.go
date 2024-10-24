@@ -20,8 +20,6 @@ func ClientUpdateZombieHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, da
 	}
 	newZombie := &game.Zombie{
 		ID:                components.EntityId(z.Id),
-		X:                 z.X,
-		Y:                 z.Y,
 		HP:                z.Hp,
 		Damage:            z.Damage,
 		GoldDropAmt:       z.GoldDrop,

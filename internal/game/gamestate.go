@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -8,7 +9,11 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/jessehorne/goldnet/internal/game/components"
+	"github.com/jessehorne/goldnet/internal/game/inventory"
 	"github.com/jessehorne/goldnet/internal/shared"
+	packets "github.com/jessehorne/goldnet/packets/dist"
+	packetscomponents "github.com/jessehorne/goldnet/packets/dist/components"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/jessehorne/goldnet/internal/util"
 )
@@ -49,6 +54,49 @@ func (gs *GameState) NextEntityId() components.EntityId {
 	return components.EntityId(gs.EntityCounter)
 }
 
+func (gs *GameState) InitPositionComponent(entityId components.EntityId,
+	position *components.PositionComponent) {
+	gs.PositionComponents[entityId] = position
+
+	positionUpdate := &packetscomponents.UpdatePosition{
+		Type:     shared.PacketUpdatePosition,
+		EntityId: int64(entityId),
+		X:        position.X,
+		Y:        position.Y,
+	}
+	existingUpdateData, existingUpdateError := proto.Marshal(positionUpdate)
+	if existingUpdateError != nil {
+		gs.Logger.Println(existingUpdateError)
+		return
+	}
+
+	for _, player := range gs.Players {
+		util.Send(player.Conn, existingUpdateData)
+	}
+}
+
+func (gs *GameState) UpdateSpriteComponent(entityId components.EntityId,
+	sprite *components.SpriteComponent) {
+	gs.SpriteComponents[entityId] = sprite
+
+	spriteUpdate := &packetscomponents.UpdateSprite{
+		Type:       shared.PacketUpdateSprite,
+		EntityId:   int64(entityId),
+		Character:  sprite.Character,
+		Foreground: int64(sprite.Foreground),
+		Background: int64(sprite.Background),
+	}
+	existingUpdateData, existingUpdateError := proto.Marshal(spriteUpdate)
+	if existingUpdateError != nil {
+		gs.Logger.Println(existingUpdateError)
+		return
+	}
+
+	for _, player := range gs.Players {
+		util.Send(player.Conn, existingUpdateData)
+	}
+}
+
 func (gs *GameState) GetPlayer(playerID int64) *components.PlayerComponent {
 	gs.Mutex.Lock()
 	defer gs.Mutex.Unlock()
@@ -69,10 +117,188 @@ func (gs *GameState) NextPlayerID() components.EntityId {
 func (gs *GameState) AddPlayer(p *components.PlayerComponent) {
 	gs.Mutex.Lock()
 	defer gs.Mutex.Unlock()
-
 	gs.Players[p.ID] = p
-	gs.SpriteComponents[p.ID] = components.NewSpriteComponent('@', tcell.ColorWhite, tcell.ColorBlack)
-	gs.PositionComponents[p.ID] = components.NewPositionComponent(0, 0)
+}
+
+func (gs *GameState) CreatePlayer(newPlayer *components.PlayerComponent) {
+	gs.Mutex.Lock()
+	gs.Players[newPlayer.ID] = newPlayer
+	gs.Mutex.Unlock()
+
+	// add a welcome note to the players inventory
+	welcomeNote := inventory.NewNote(1, "a clean envelope", "welcome!")
+	welcomeNote.SetUseCallback(func() {
+		msg := &packets.Message{
+			Type: shared.PacketSendMessage,
+			Data: fmt.Sprintf("%s %s", "(GAME)", "The note says 'Welcome!'"),
+		}
+		p, perr := proto.Marshal(msg)
+		if perr != nil {
+			gs.Logger.Println(perr)
+			return
+		}
+		util.Send(newPlayer.Conn, p)
+	})
+	newPlayer.Inventory.AddItem(welcomeNote)
+
+	clueNote := inventory.NewNote(1, "a dirty envelope", "here's a clue...")
+	clueNote.SetUseCallback(func() {
+		msg := &packets.Message{
+			Type: shared.PacketSendMessage,
+			Data: fmt.Sprintf("%s %s", "(GAME)", "The note says 'here's a clue...'"),
+		}
+		p, perr := proto.Marshal(msg)
+		if perr != nil {
+			gs.Logger.Println(perr)
+			return
+		}
+		util.Send(newPlayer.Conn, p)
+	})
+	newPlayer.Inventory.AddItem(clueNote)
+
+	// send zombies to player
+	for _, z := range gs.Zombies {
+		zPacket := &packets.UpdateZombie{
+			Type:              shared.PacketUpdateZombie,
+			Id:                int64(z.ID),
+			Hp:                z.HP,
+			Damage:            z.Damage,
+			GoldDrop:          z.GoldDropAmt,
+			FollowingPlayerId: int64(z.FollowingPlayerId),
+		}
+		zData, zerr := proto.Marshal(zPacket)
+		if zerr != nil {
+			gs.Logger.Println(zerr)
+			continue
+		}
+		util.Send(newPlayer.Conn, zData)
+	}
+
+	// let every player know they joined
+	others := []*components.PlayerComponent{}
+	for _, p := range gs.Players {
+		if p == nil {
+			continue
+		}
+		if p.ID == newPlayer.ID {
+			continue
+		}
+		others = append(others, p)
+
+		pJoined := &packets.PlayerJoined{
+			Type: shared.PacketPlayerJoined,
+			Id:   int64(newPlayer.ID),
+		}
+		pData, perr := proto.Marshal(pJoined)
+		if perr != nil {
+			gs.Logger.Println(perr)
+			continue
+		}
+		util.Send(p.Conn, pData)
+	}
+
+	selfUpdate := &packets.UpdatePlayer{
+		Type:      shared.PacketUpdatePlayer,
+		Id:        int64(newPlayer.ID),
+		Username:  newPlayer.Username,
+		Gold:      newPlayer.Gold,
+		Hp:        newPlayer.HP,
+		St:        newPlayer.ST,
+		Hostile:   newPlayer.Hostile,
+		Inventory: newPlayer.Inventory.ToBytes(),
+	}
+	// send self join packet to player with their ID
+	selfJoin := &packets.SelfJoin{
+		Type: shared.PacketPlayerSelfJoined,
+		Self: selfUpdate,
+	}
+	selfJoinData, selfJoinError := proto.Marshal(selfJoin)
+	if selfJoinError != nil {
+		gs.Logger.Println(selfJoinError)
+		return
+	}
+	util.Send(newPlayer.Conn, selfJoinData)
+
+	selfUpdateData, selfUpdateError := proto.Marshal(selfUpdate)
+	if selfUpdateError != nil {
+		gs.Logger.Println(selfUpdateError)
+		return
+	}
+
+	// Learn of other players and teach them of myself
+	for _, player := range others {
+		existingPlayerUpdate := &packets.UpdatePlayer{
+			Type:     shared.PacketUpdatePlayer,
+			Id:       int64(player.ID),
+			Username: player.Username,
+			Hp:       player.HP,
+			Hostile:  player.Hostile,
+		}
+		existingUpdateData, existingUpdateError := proto.Marshal(existingPlayerUpdate)
+		if existingUpdateError != nil {
+			gs.Logger.Println(existingUpdateError)
+			return
+		}
+		util.Send(newPlayer.Conn, existingUpdateData)
+		util.Send(player.Conn, selfUpdateData)
+	}
+
+	// Send all position components
+	for entityId, position := range gs.PositionComponents {
+		existingPlayerUpdate := &packetscomponents.UpdatePosition{
+			Type:     shared.PacketUpdatePosition,
+			EntityId: int64(entityId),
+			X:        position.X,
+			Y:        position.Y,
+		}
+		existingUpdateData, existingUpdateError := proto.Marshal(existingPlayerUpdate)
+		if existingUpdateError != nil {
+			gs.Logger.Println(existingUpdateError)
+			return
+		}
+		util.Send(newPlayer.Conn, existingUpdateData)
+	}
+
+	// Send all sprite components
+	for entityId, sprite := range gs.SpriteComponents {
+		existingPlayerUpdate := &packetscomponents.UpdateSprite{
+			Type:       shared.PacketUpdateSprite,
+			EntityId:   int64(entityId),
+			Character:  sprite.Character,
+			Background: int64(sprite.Background),
+			Foreground: int64(sprite.Foreground),
+		}
+		existingUpdateData, existingUpdateError := proto.Marshal(existingPlayerUpdate)
+		if existingUpdateError != nil {
+			gs.Logger.Println(existingUpdateError)
+			return
+		}
+		util.Send(newPlayer.Conn, existingUpdateData)
+	}
+
+	// send nearby chunks to player
+	nearbyChunks, _ := gs.GetChunksAroundPlayer(newPlayer)
+	chunkData := util.Int64ToBytes(int64(len(nearbyChunks)))
+	for _, c := range nearbyChunks {
+		chunkData = append(chunkData, c.ToBytes()...)
+	}
+	chunksPacket := &packets.Chunks{
+		Type: shared.PacketChunks,
+		Data: chunkData,
+	}
+	chunksPacketData, chunksPacketErr := proto.Marshal(chunksPacket)
+	if chunksPacketErr != nil {
+		gs.Logger.Println(chunksPacketErr)
+		return
+	}
+	util.Send(newPlayer.Conn, chunksPacketData)
+
+	// Add player's needed components
+	sprite := components.NewSpriteComponent('@', tcell.ColorWhite, tcell.ColorBlack)
+	gs.UpdateSpriteComponent(newPlayer.ID, sprite)
+
+	position := components.NewPositionComponent(0, 0)
+	gs.InitPositionComponent(newPlayer.ID, position)
 }
 
 func (gs *GameState) RemovePlayer(playerID components.EntityId) {

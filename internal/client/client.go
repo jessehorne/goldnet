@@ -138,6 +138,11 @@ func (c *Client) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 
 		// it is movement, so handle movement
 		position := c.GameState.PositionComponents[p.ID]
+		if position == nil {
+			c.GUI.Chat.AddMessage("[DEBUG ERROR] Missing position component")
+			return nil
+		}
+
 		mod := (1 / float64(p.Speed)) * 1000
 
 		b := c.GameState.GetTerrainAtCoords(position.X, position.Y)

@@ -24,17 +24,6 @@ func ClientPlayerSelfJoinedHandler(g *gui.GUI, gs *game.GameState, conn net.Conn
 	gs.SetIntStore("playerID", sj.Self.Id)
 	g.Sidebar.UpdatePlayerStats(p)
 
-	for _, op := range sj.Others {
-		otherPlayer := &components.PlayerComponent{
-			ID:       components.EntityId(op.Id),
-			Username: op.Username,
-			HP:       op.Hp,
-			ST:       op.St,
-			Hostile:  op.Hostile,
-		}
-		gs.AddPlayer(otherPlayer)
-	}
-
 	g.Chat.AddMessage(util.NewSystemMessage("GAME", "You've connected to GoldNet Official. Good luck!"))
 }
 

@@ -2,11 +2,12 @@ package handlers
 
 import (
 	"fmt"
+	"net"
+
 	"github.com/jessehorne/goldnet/internal/shared"
 	"github.com/jessehorne/goldnet/internal/util"
 	packets "github.com/jessehorne/goldnet/packets/dist"
 	"google.golang.org/protobuf/proto"
-	"net"
 
 	"github.com/jessehorne/goldnet/internal/game"
 )

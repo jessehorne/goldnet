@@ -10,6 +10,8 @@ const (
 	PacketPlayerSelfJoined
 	PacketPlayerDisconnected
 	PacketPlayerToggleHostile
+	PacketUpdatePosition
+	PacketUpdateSprite
 	PacketUpdatePlayer
 	PacketUpdateZombie
 	PacketRemoveZombie

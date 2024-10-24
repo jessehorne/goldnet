@@ -1,11 +1,14 @@
 package handlers
 
 import (
-	"github.com/jessehorne/goldnet/internal/shared"
-	packets "github.com/jessehorne/goldnet/packets/dist"
+	"fmt"
 	"net"
 
+	"github.com/jessehorne/goldnet/internal/shared"
+	packets "github.com/jessehorne/goldnet/packets/dist"
+
 	"github.com/jessehorne/goldnet/internal/client/gui"
+	"github.com/jessehorne/goldnet/internal/client/handlers/components"
 	"github.com/jessehorne/goldnet/internal/game"
 )
 
@@ -26,6 +29,8 @@ func NewPacketHandler(gs *game.GameState) *PacketHandler {
 			shared.PacketSetHostile:         ClientPlayerToggleHostileHandler,
 			shared.PacketChunks:             ClientChunksHandler,
 			shared.PacketSendMessage:        ClientMessageHandler,
+			shared.PacketUpdatePosition:     components.ClientUpdatePositionHandler,
+			shared.PacketUpdateSprite:       components.ClientUpdateSpriteHandler,
 			shared.PacketUpdatePlayer:       ClientUpdatePlayerHandler,
 			shared.PacketUpdateZombie:       ClientUpdateZombieHandler,
 			shared.PacketRemoveZombie:       ClientRemoveZombieHandler,
@@ -37,5 +42,8 @@ func (h *PacketHandler) Handle(g *gui.GUI, conn net.Conn, msg *packets.Raw, data
 	handler, ok := h.Handlers[msg.Type]
 	if ok {
 		handler(g, h.GameState, conn, data)
+	} else {
+		msg := fmt.Sprintf("[DEBUG ERROR] Received a message I don't know how to handle %d", msg.Type)
+		g.Chat.AddMessage(msg)
 	}
 }

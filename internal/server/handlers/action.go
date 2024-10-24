@@ -5,6 +5,7 @@ import (
 	"time"
 
 	packets "github.com/jessehorne/goldnet/packets/dist"
+	packetscomponents "github.com/jessehorne/goldnet/packets/dist/components"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/jessehorne/goldnet/internal/game"
@@ -47,29 +48,24 @@ func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data
 
 			gs.HandlePlayerAction(p, action.Action)
 
-			// TODO - send the updated position to the player
-			// upp := &packets.UpdatePlayer{
-			// 	Type:      shared.PacketUpdatePlayer,
-			// 	Id:        int64(p.ID),
-			// 	Username:  p.Username,
-			// 	Gold:      p.Gold,
-			// 	Hp:        p.HP,
-			// 	St:        p.ST,
-			// 	Hostile:   p.Hostile,
-			// 	Inventory: p.Inventory.ToBytes(),
-			// }
-			// uppData, uppDataErr := proto.Marshal(upp)
-			// if uppDataErr != nil {
-			// 	gs.Logger.Println(uppDataErr)
-			// 	return
-			// }
-			// util.Send(conn, uppData)
+			upp := &packetscomponents.UpdatePosition{
+				Type:     shared.PacketUpdatePlayer,
+				EntityId: int64(p.ID),
+				X:        position.X,
+				Y:        position.Y,
+			}
+			uppData, uppDataErr := proto.Marshal(upp)
+			if uppDataErr != nil {
+				gs.Logger.Println(uppDataErr)
+				return
+			}
+			util.Send(conn, uppData)
 
 			// send movement to other nearby players
-			// nearbyPlayers := gs.GetPlayersAroundPlayer(p)
-			// for _, other := range nearbyPlayers {
-			// 	util.Send(other.Conn, uppData)
-			// }
+			nearbyPlayers := gs.GetPlayersAroundPlayer(p)
+			for _, other := range nearbyPlayers {
+				util.Send(other.Conn, uppData)
+			}
 		} else {
 			// send the updated position to the player
 			upp := &packets.UpdatePlayer{

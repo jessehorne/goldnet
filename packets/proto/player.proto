@@ -17,7 +17,6 @@ message UpdatePlayer{
 message SelfJoin{
   int32 type = 1;
   UpdatePlayer self = 2;
-  repeated UpdatePlayer others = 3;
 }
 
 message Leave{
