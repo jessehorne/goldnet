@@ -18,14 +18,14 @@ func ClientUpdateZombieHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, da
 		gs.Logger.Println("couldn't unmarshal update zombie packet")
 		return
 	}
-	newZombie := &game.Zombie{
+	newZombie := &components.ZombieComponent{
 		ID:                components.EntityId(z.Id),
 		HP:                z.Hp,
 		Damage:            z.Damage,
 		GoldDropAmt:       z.GoldDrop,
 		FollowingPlayerId: components.EntityId(z.FollowingPlayerId),
 	}
-	gs.Zombies[components.EntityId(z.Id)] = newZombie
+	gs.ZombieComponents[components.EntityId(z.Id)] = newZombie
 }
 
 func ClientRemoveZombieHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []byte) {
@@ -35,5 +35,5 @@ func ClientRemoveZombieHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, da
 		gs.Logger.Println("couldn't unmarshal remove zombie packet")
 		return
 	}
-	delete(gs.Zombies, components.EntityId(rz.Id))
+	delete(gs.ZombieComponents, components.EntityId(rz.Id))
 }

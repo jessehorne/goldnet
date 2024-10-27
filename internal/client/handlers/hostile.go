@@ -20,6 +20,6 @@ func ClientPlayerToggleHostileHandler(g *gui.GUI, gs *game.GameState, conn net.C
 	}
 
 	gs.Mutex.Lock()
-	gs.Players[components.EntityId(shp.PlayerID)].Hostile = shp.Hostile
+	gs.PlayerComponents[components.EntityId(shp.PlayerID)].Hostile = shp.Hostile
 	gs.Mutex.Unlock()
 }

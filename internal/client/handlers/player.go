@@ -29,7 +29,7 @@ func ClientUpdatePlayerHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, da
 	// p.Hostile = up.Hostile
 
 	p := components.NewPlayer(components.EntityId(up.Id), up.GetInventory(), nil)
-	gs.Players[components.EntityId(up.Id)] = p
+	gs.PlayerComponents[components.EntityId(up.Id)] = p
 
 	// gs.MovePlayer(p.ID, p.X, p.Y)
 

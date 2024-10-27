@@ -35,7 +35,7 @@ func ServerMessageHandler(gs *game.GameState, playerID int64, conn net.Conn, dat
 		gs.Logger.Println(perr)
 		return
 	}
-	for _, pl := range gs.Players {
+	for _, pl := range gs.PlayerComponents {
 		if pl == nil {
 			return
 		}

@@ -19,7 +19,7 @@ func ServerUserJoinHandler(gs *game.GameState, playerID int64, conn net.Conn, da
 	// add player to gamestates list of players
 	playerId := gs.NextEntityId()
 	newPlayer := components.NewPlayer(playerId, nil, conn)
-	gs.CreatePlayer(newPlayer)
+	gs.InitNewPlayer(newPlayer)
 }
 
 func ServerUserDisconnectedHandler(gs *game.GameState, playerID int64, conn net.Conn, data []byte) {
@@ -39,7 +39,7 @@ func ServerUserDisconnectedHandler(gs *game.GameState, playerID int64, conn net.
 		gs.Logger.Println(dpErr)
 		return
 	}
-	for _, p := range gs.Players {
+	for _, p := range gs.PlayerComponents {
 		if p == nil {
 			continue
 		}

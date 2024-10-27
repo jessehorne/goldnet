@@ -9,6 +9,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/jessehorne/goldnet/internal/game"
+	"github.com/jessehorne/goldnet/internal/game/components"
 	"github.com/jessehorne/goldnet/internal/shared"
 	"github.com/jessehorne/goldnet/internal/util"
 )
@@ -98,9 +99,10 @@ func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data
 			for _, c := range newlyGenerated {
 				shouldCreateZombie := util.RandomIntBetween(0, 16) == 0
 				if shouldCreateZombie {
-					newZombie := game.NewZombie(c.X*game.CHUNK_W, c.Y*game.CHUNK_H)
+					newZombie := components.NewZombieComponent(
+						gs.NextEntityId(), c.X*game.CHUNK_W, c.Y*game.CHUNK_H)
 					gs.Logger.Println("added zombie with ID", newZombie.ID)
-					gs.Zombies[newZombie.ID] = newZombie
+					gs.ZombieComponents[newZombie.ID] = newZombie
 
 					// TODO - send new zombie to all players
 					// zPacket := &packets.UpdateZombie{
@@ -161,7 +163,7 @@ func ServerSetHostileHandler(gs *game.GameState, playerID int64, conn net.Conn, 
 
 	gs.Logger.Println("Toggled Hostile")
 
-	for _, player := range gs.Players {
+	for _, player := range gs.PlayerComponents {
 		setHostile := &packets.SetHostile{
 			Type:     shared.PacketSetHostile,
 			PlayerID: int64(p.ID),
