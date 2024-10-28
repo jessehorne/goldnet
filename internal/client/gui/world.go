@@ -5,6 +5,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/jessehorne/goldnet/internal/game"
+	"github.com/jessehorne/goldnet/internal/game/components"
 	"github.com/jessehorne/goldnet/internal/shared"
 	"github.com/rivo/tview"
 )
@@ -44,6 +45,15 @@ func (m *World) Draw(screen tcell.Screen, x, y, width, height int) {
 
 	m.GameState.Mutex.Lock()
 	defer m.GameState.Mutex.Unlock()
+
+	playerId, ok := m.GameState.IntStore["playerID"]
+	if ok {
+		playerPosition := m.GameState.PositionComponents[components.EntityId(playerId)]
+		if playerPosition != nil {
+			m.OffsetX = 50 + -int(playerPosition.X)
+			m.OffsetY = 13 + -int(playerPosition.Y)
+		}
+	}
 
 	for _, c := range m.Chunks {
 		startX := c.X * game.CHUNK_W

@@ -99,30 +99,11 @@ func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data
 			for _, c := range newlyGenerated {
 				shouldCreateZombie := util.RandomIntBetween(0, 16) == 0
 				if shouldCreateZombie {
-					newZombie := components.NewZombieComponent(
-						gs.NextEntityId(), c.X*game.CHUNK_W, c.Y*game.CHUNK_H)
+					newX := c.X * game.CHUNK_W
+					newY := c.Y * game.CHUNK_H
+					newZombie := components.NewZombieComponent(gs.NextEntityId(), newX, newY)
 					gs.Logger.Println("added zombie with ID", newZombie.ID)
-					gs.ZombieComponents[newZombie.ID] = newZombie
-
-					// TODO - send new zombie to all players
-					// zPacket := &packets.UpdateZombie{
-					// 	Type:              shared.PacketUpdateZombie,
-					// 	Id:                newZombie.ID,
-					// 	X:                 newZombie.X,
-					// 	Y:                 newZombie.Y,
-					// 	Hp:                newZombie.HP,
-					// 	Damage:            newZombie.Damage,
-					// 	GoldDrop:          newZombie.GoldDropAmt,
-					// 	FollowingPlayerId: newZombie.FollowingPlayerId,
-					// }
-					// zData, zerr := proto.Marshal(zPacket)
-					// if zerr != nil {
-					// 	gs.Logger.Println(zerr)
-					// 	continue
-					// }
-					// for _, otherPlayer := range gs.Players {
-					// 	util.Send(otherPlayer.Conn, zData)
-					// }
+					gs.InitNewZombie(newZombie, newX, newY)
 				}
 			}
 

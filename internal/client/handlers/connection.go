@@ -35,7 +35,7 @@ func ClientPlayerJoinedHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, da
 		return
 	}
 
-	newPlayer := &components.PlayerComponent{
+	newPlayer := &components.Player{
 		ID:       components.EntityId(pj.Id),
 		Username: pj.Username,
 		HP:       pj.Hp,

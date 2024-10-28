@@ -1,4 +1,4 @@
-package handlers
+package components
 
 import (
 	"net"
@@ -18,7 +18,8 @@ func ClientUpdateZombieHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, da
 		gs.Logger.Println("couldn't unmarshal update zombie packet")
 		return
 	}
-	newZombie := &components.ZombieComponent{
+
+	newZombie := &components.Zombie{
 		ID:                components.EntityId(z.Id),
 		HP:                z.Hp,
 		Damage:            z.Damage,

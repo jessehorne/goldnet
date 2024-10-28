@@ -8,7 +8,7 @@ import (
 
 const ZOMBIE_FOLLOW_RANGE int64 = 25
 
-type ZombieComponent struct {
+type Zombie struct {
 	ID                EntityId
 	HP                int64
 	Damage            int64
@@ -18,9 +18,9 @@ type ZombieComponent struct {
 	LastAttackTime time.Time
 }
 
-func NewZombieComponent(entityId EntityId, x, y int64) *ZombieComponent {
+func NewZombieComponent(entityId EntityId, x, y int64) *Zombie {
 	mod := util.Distance(x, y, 0, 0) / 500
-	return &ZombieComponent{
+	return &Zombie{
 		ID:                entityId,
 		HP:                10 + mod,
 		Damage:            5 + mod,

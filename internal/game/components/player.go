@@ -7,7 +7,7 @@ import (
 	"github.com/jessehorne/goldnet/internal/game/inventory"
 )
 
-type PlayerComponent struct {
+type Player struct {
 	ID        EntityId
 	OldChunkX int64
 	OldChunkY int64
@@ -27,8 +27,8 @@ type PlayerComponent struct {
 	Hostile bool
 }
 
-func NewPlayer(entityId EntityId, inv []byte, c net.Conn) *PlayerComponent {
-	return &PlayerComponent{
+func NewPlayer(entityId EntityId, inv []byte, c net.Conn) *Player {
+	return &Player{
 		ID:               entityId,
 		Inventory:        inventory.NewInventory(inv),
 		Conn:             c,

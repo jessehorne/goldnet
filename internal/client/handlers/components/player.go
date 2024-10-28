@@ -1,4 +1,4 @@
-package handlers
+package components
 
 import (
 	"fmt"
@@ -22,11 +22,6 @@ func ClientUpdatePlayerHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, da
 
 	msg := fmt.Sprintf("Handling update to player %d", up.Id)
 	g.Chat.AddMessage(msg)
-
-	// p.Gold = up.Gold
-	// p.HP = up.Hp
-	// p.ST = up.St
-	// p.Hostile = up.Hostile
 
 	p := components.NewPlayer(components.EntityId(up.Id), up.GetInventory(), nil)
 	gs.PlayerComponents[components.EntityId(up.Id)] = p

@@ -31,9 +31,9 @@ func NewPacketHandler(gs *game.GameState) *PacketHandler {
 			shared.PacketSendMessage:        ClientMessageHandler,
 			shared.PacketUpdatePosition:     components.ClientUpdatePositionHandler,
 			shared.PacketUpdateSprite:       components.ClientUpdateSpriteHandler,
-			shared.PacketUpdatePlayer:       ClientUpdatePlayerHandler,
-			shared.PacketUpdateZombie:       ClientUpdateZombieHandler,
-			shared.PacketRemoveZombie:       ClientRemoveZombieHandler,
+			shared.PacketUpdatePlayer:       components.ClientUpdatePlayerHandler,
+			shared.PacketUpdateZombie:       components.ClientUpdateZombieHandler,
+			shared.PacketRemoveZombie:       components.ClientRemoveZombieHandler,
 		},
 	}
 }

@@ -1,7 +1,6 @@
 package components
 
 import (
-	"fmt"
 	"net"
 
 	"github.com/gdamore/tcell/v2"
@@ -20,8 +19,8 @@ func ClientUpdateSpriteHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, da
 		return
 	}
 
-	msg := fmt.Sprintf("Handling sprite update for player %d", up.EntityId)
-	g.Chat.AddMessage(msg)
+	// msg := fmt.Sprintf("Handling sprite update for entity %d", up.EntityId)
+	// g.Chat.AddMessage(msg)
 
 	gs.Mutex.Lock()
 	gs.SpriteComponents[components.EntityId(up.EntityId)] = components.NewSpriteComponent(

@@ -66,7 +66,7 @@ func (s *Sidebar) SetActiveTab(name string) {
 	s.Nav.SetText(tmpl)
 }
 
-func (s *Sidebar) UpdatePlayerStats(p *components.PlayerComponent) {
+func (s *Sidebar) UpdatePlayerStats(p *components.Player) {
 	tmpl := `
 Name: %s
 
@@ -88,7 +88,7 @@ Name: %s
 	))
 }
 
-func (s *Sidebar) UpdatePlayerInventory(p *components.PlayerComponent) {
+func (s *Sidebar) UpdatePlayerInventory(p *components.Player) {
 	tmpl := ``
 
 	for index, item := range p.Inventory.Items {
