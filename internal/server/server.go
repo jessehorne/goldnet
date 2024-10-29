@@ -81,12 +81,13 @@ func (s *Server) HandleConnection(conn net.Conn, handler *handlers.PacketHandler
 	defer conn.Close()
 	s.Logger.Println("connection made: ", conn.RemoteAddr().String())
 	reader := bufio.NewReader(conn)
-	playerID := int64(s.GameState.NextPlayerID())
+	playerID := int64(s.GameState.NextEntityId())
 	for {
 		lenBytes := make([]byte, 8)
 		_, err := io.ReadFull(reader, lenBytes)
 		if err != nil {
 			handlers.ServerUserDisconnectedHandler(s.GameState, playerID, conn, nil)
+			s.Logger.Printf("Disconnected from %s: Failed to read message length", conn.RemoteAddr().String())
 			break
 		}
 
@@ -95,12 +96,14 @@ func (s *Server) HandleConnection(conn net.Conn, handler *handlers.PacketHandler
 		_, err = io.ReadFull(reader, msgBytes)
 		if err != nil {
 			handlers.ServerUserDisconnectedHandler(s.GameState, playerID, conn, nil)
+			s.Logger.Printf("Disconnected from %s: Failed to read message contents", conn.RemoteAddr().String())
 			break
 		}
 
 		msg := packets.Raw{}
 		err = proto.Unmarshal(msgBytes, &msg)
 		if err != nil {
+			s.Logger.Printf("Disconnected from %s: Failed to unmarshal message", conn.RemoteAddr().String())
 			handlers.ServerUserDisconnectedHandler(s.GameState, playerID, conn, nil)
 			break
 		}

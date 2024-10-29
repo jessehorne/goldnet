@@ -32,7 +32,7 @@ func NewWorld(gs *game.GameState) *World {
 		OffsetY:   13,
 		GameState: gs,
 	}
-	box = box.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
+	box.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 		m.Draw(screen, x, y, width, height)
 		return x, y, width, height
 	})
@@ -46,8 +46,8 @@ func (m *World) Draw(screen tcell.Screen, x, y, width, height int) {
 	m.GameState.Mutex.Lock()
 	defer m.GameState.Mutex.Unlock()
 
-	playerId, ok := m.GameState.IntStore["playerID"]
-	if ok {
+	playerId, exists := m.GameState.IntStore["playerID"]
+	if exists {
 		playerPosition := m.GameState.PositionComponents[components.EntityId(playerId)]
 		if playerPosition != nil {
 			m.OffsetX = 50 + -int(playerPosition.X)

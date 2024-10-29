@@ -9,7 +9,6 @@ const (
 	PacketPlayerJoined
 	PacketPlayerSelfJoined
 	PacketPlayerDisconnected
-	PacketPlayerToggleHostile
 	PacketUpdatePosition
 	PacketUpdateSprite
 	PacketUpdatePlayer

@@ -4,6 +4,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/gdamore/tcell/v2"
 	packets "github.com/jessehorne/goldnet/packets/dist"
 	packetscomponents "github.com/jessehorne/goldnet/packets/dist/components"
 	"google.golang.org/protobuf/proto"
@@ -144,17 +145,17 @@ func ServerSetHostileHandler(gs *game.GameState, playerID int64, conn net.Conn, 
 
 	gs.Logger.Println("Toggled Hostile")
 
-	for _, player := range gs.PlayerComponents {
-		setHostile := &packets.SetHostile{
-			Type:     shared.PacketSetHostile,
-			PlayerID: int64(p.ID),
-			Hostile:  p.Hostile,
-		}
-		setHostileData, setHostileDataErr := proto.Marshal(setHostile)
-		if setHostileDataErr != nil {
-			gs.Logger.Println(err)
-			continue
-		}
-		util.Send(player.Conn, setHostileData)
+	backgroundColor := tcell.ColorBlack
+	if sh.Hostile {
+		backgroundColor = tcell.ColorRed
 	}
+
+	// Update hostile sprites
+	game.SendOneToAll(gs, &packetscomponents.UpdateSprite{
+		Type:       shared.PacketUpdateSprite,
+		EntityId:   int64(p.ID),
+		Character:  '@',
+		Foreground: int64(tcell.ColorWhite),
+		Background: int64(backgroundColor),
+	})
 }

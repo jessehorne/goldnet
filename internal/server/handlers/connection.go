@@ -17,8 +17,7 @@ func ServerUserJoinHandler(gs *game.GameState, playerID int64, conn net.Conn, da
 	gs.Logger.Println("[PACKET] user joined with a ID of", playerID)
 
 	// add player to gamestates list of players
-	playerId := gs.NextEntityId()
-	newPlayer := components.NewPlayer(playerId, nil, conn)
+	newPlayer := components.NewPlayer(components.EntityId(playerID), nil, conn)
 	gs.InitNewPlayer(newPlayer)
 }
 

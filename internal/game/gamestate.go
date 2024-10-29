@@ -22,7 +22,6 @@ import (
 
 type GameState struct {
 	EntityCounter      int64
-	PlayerCounter      int64
 	PlayerComponents   map[components.EntityId]*components.Player
 	ZombieComponents   map[components.EntityId]*components.Zombie
 	SpriteComponents   map[components.EntityId]*components.Sprite
@@ -42,7 +41,6 @@ func NewGameState() *GameState {
 		SpriteComponents:   map[components.EntityId]*components.Sprite{},
 		PositionComponents: map[components.EntityId]*components.Position{},
 		EntityCounter:      0,
-		PlayerCounter:      0,
 		Chunks:             map[int64]map[int64]*Chunk{},
 		IntStore:           map[string]int64{},
 		TPS:                10, // ticks per second
@@ -53,6 +51,9 @@ func (gs *GameState) NextEntityId() components.EntityId {
 	gs.Mutex.Lock()
 	defer gs.Mutex.Unlock()
 	gs.EntityCounter += 1
+
+	gs.Logger.Println("Assigning entity ID: ", gs.EntityCounter)
+
 	return components.EntityId(gs.EntityCounter)
 }
 
@@ -107,13 +108,6 @@ func (gs *GameState) GetPlayer(playerID int64) *components.Player {
 		return nil
 	}
 	return p
-}
-
-func (gs *GameState) NextPlayerID() components.EntityId {
-	gs.Mutex.Lock()
-	defer gs.Mutex.Unlock()
-	gs.PlayerCounter += 1
-	return components.EntityId(gs.PlayerCounter)
 }
 
 func (gs *GameState) AddPlayer(p *components.Player) {
@@ -532,6 +526,7 @@ func (gs *GameState) RunGameLoop() {
 		UpdateCombatSystem(gs)
 		UpdateZombiesSystem(gs)
 
+		// TODO: Time the update logic and pass the remaining time here
 		time.Sleep(dt * time.Millisecond)
 	}
 }

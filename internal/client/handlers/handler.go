@@ -26,7 +26,6 @@ func NewPacketHandler(gs *game.GameState) *PacketHandler {
 			shared.PacketPlayerJoined:       ClientPlayerJoinedHandler,
 			shared.PacketPlayerSelfJoined:   ClientPlayerSelfJoinedHandler,
 			shared.PacketPlayerDisconnected: ClientPlayerDisconnectedHandler,
-			shared.PacketSetHostile:         ClientPlayerToggleHostileHandler,
 			shared.PacketChunks:             ClientChunksHandler,
 			shared.PacketSendMessage:        ClientMessageHandler,
 			shared.PacketUpdatePosition:     components.ClientUpdatePositionHandler,

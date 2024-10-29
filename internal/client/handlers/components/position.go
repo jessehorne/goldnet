@@ -18,9 +18,6 @@ func ClientUpdatePositionHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, 
 		return
 	}
 
-	// msg := fmt.Sprintf("Handling position update for entity %d", up.EntityId)
-	// g.Chat.AddMessage(msg)
-
 	gs.Mutex.Lock()
 	gs.PositionComponents[components.EntityId(up.EntityId)] = components.NewPositionComponent(up.X, up.Y)
 	gs.Mutex.Unlock()
