@@ -20,6 +20,9 @@ func ClientUpdatePlayerHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, da
 	}
 
 	p := components.NewPlayer(components.EntityId(up.Id), up.GetInventory(), nil)
+	p.HP = up.Hp
+	p.Gold = up.Gold
+	p.Username = up.Username
 	gs.PlayerComponents[components.EntityId(up.Id)] = p
 
 	currentPlayerID, exists := gs.GetIntStore("playerID")

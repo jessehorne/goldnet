@@ -118,6 +118,8 @@ func UpdateCombatSystem(gs *GameState) {
 						// TODO - Drop stuff and do a respawn
 						otherPlayer.Gold = 0
 						otherPlayer.HP = 10
+						otherPlayerPosition.X = 0
+						otherPlayerPosition.Y = 0
 
 						SendOneToAll(gs, &packetscomponents.UpdatePosition{
 							Type:     shared.PacketUpdatePosition,
