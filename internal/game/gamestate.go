@@ -210,31 +210,19 @@ func (gs *GameState) InitNewPlayer(newPlayer *components.Player) {
 	// add a welcome note to the players inventory
 	welcomeNote := inventory.NewNote(1, "a clean envelope", "welcome!")
 	welcomeNote.SetUseCallback(func() {
-		msg := &packets.Message{
+		SendOneToOne(newPlayer.Conn, gs, &packets.Message{
 			Type: shared.PacketSendMessage,
 			Data: fmt.Sprintf("%s %s", "(GAME)", "The note says 'Welcome!'"),
-		}
-		p, perr := proto.Marshal(msg)
-		if perr != nil {
-			gs.Logger.Println(perr)
-			return
-		}
-		util.Send(newPlayer.Conn, p)
+		})
 	})
 	newPlayer.Inventory.AddItem(welcomeNote)
 
 	clueNote := inventory.NewNote(1, "a dirty envelope", "here's a clue...")
 	clueNote.SetUseCallback(func() {
-		msg := &packets.Message{
+		SendOneToOne(newPlayer.Conn, gs, &packets.Message{
 			Type: shared.PacketSendMessage,
 			Data: fmt.Sprintf("%s %s", "(GAME)", "The note says 'here's a clue...'"),
-		}
-		p, perr := proto.Marshal(msg)
-		if perr != nil {
-			gs.Logger.Println(perr)
-			return
-		}
-		util.Send(newPlayer.Conn, p)
+		})
 	})
 	newPlayer.Inventory.AddItem(clueNote)
 

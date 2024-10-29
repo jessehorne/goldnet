@@ -4,9 +4,7 @@ import (
 	"net"
 
 	"github.com/jessehorne/goldnet/internal/shared"
-	"github.com/jessehorne/goldnet/internal/util"
 	packets "github.com/jessehorne/goldnet/packets/dist"
-	"google.golang.org/protobuf/proto"
 
 	"github.com/jessehorne/goldnet/internal/game/components"
 
@@ -28,20 +26,8 @@ func ServerUserDisconnectedHandler(gs *game.GameState, playerID int64, conn net.
 	gs.RemovePlayer(components.EntityId(playerID))
 
 	// let everyone know they left
-	dp := &packets.PlayerDisconnected{
+	game.SendOneToAll(gs, &packets.PlayerDisconnected{
 		Type: shared.PacketPlayerDisconnected,
 		Id:   playerID,
-	}
-
-	dpData, dpErr := proto.Marshal(dp)
-	if dpErr != nil {
-		gs.Logger.Println(dpErr)
-		return
-	}
-	for _, p := range gs.PlayerComponents {
-		if p == nil {
-			continue
-		}
-		util.Send(p.Conn, dpData)
-	}
+	})
 }

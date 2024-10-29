@@ -70,7 +70,7 @@ func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data
 			}
 		} else {
 			// send the updated position to the player
-			upp := &packets.UpdatePlayer{
+			game.SendOneToOne(conn, gs, &packets.UpdatePlayer{
 				Type:      shared.PacketUpdatePosition,
 				Id:        int64(p.ID),
 				Username:  p.Username,
@@ -79,13 +79,7 @@ func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data
 				St:        p.ST,
 				Hostile:   p.Hostile,
 				Inventory: p.Inventory.ToBytes(),
-			}
-			uppData, uppDataErr := proto.Marshal(upp)
-			if uppDataErr != nil {
-				gs.Logger.Println(uppDataErr)
-				return
-			}
-			util.Send(conn, uppData)
+			})
 		}
 
 		// send chunks if players chunk has updated
@@ -113,17 +107,10 @@ func ServerActionHandler(gs *game.GameState, playerID int64, conn net.Conn, data
 				chunkData = append(chunkData, c.ToBytes()...)
 			}
 
-			chunksPacket := &packets.Chunks{
+			game.SendOneToOne(conn, gs, &packets.Chunks{
 				Type: shared.PacketChunks,
 				Data: chunkData,
-			}
-			chunksPacketData, chunksPacketErr := proto.Marshal(chunksPacket)
-			if chunksPacketErr != nil {
-				gs.Logger.Println(chunksPacketErr)
-				return
-			}
-
-			util.Send(conn, chunksPacketData)
+			})
 		}
 	}
 }

@@ -5,7 +5,6 @@ import (
 	"net"
 
 	"github.com/jessehorne/goldnet/internal/shared"
-	"github.com/jessehorne/goldnet/internal/util"
 	packets "github.com/jessehorne/goldnet/packets/dist"
 	"google.golang.org/protobuf/proto"
 
@@ -26,19 +25,8 @@ func ServerMessageHandler(gs *game.GameState, playerID int64, conn net.Conn, dat
 		return
 	}
 
-	msgPacket := &packets.Message{
+	game.SendOneToAll(gs, &packets.Message{
 		Type: shared.PacketSendMessage,
 		Data: fmt.Sprintf("%s - %s", p.Username, messageFromPlayer.Data),
-	}
-	msgData, perr := proto.Marshal(msgPacket)
-	if perr != nil {
-		gs.Logger.Println(perr)
-		return
-	}
-	for _, pl := range gs.PlayerComponents {
-		if pl == nil {
-			return
-		}
-		util.Send(pl.Conn, msgData)
-	}
+	})
 }
