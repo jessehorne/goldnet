@@ -1,132 +1,152 @@
 package game
 
 import (
-	"github.com/jessehorne/goldnet/internal/shared"
-	"net"
+	"fmt"
 	"time"
 
-	"github.com/jessehorne/goldnet/internal/game/inventory"
-	"github.com/jessehorne/goldnet/internal/util"
+	"github.com/jessehorne/goldnet/internal/shared"
+	packets "github.com/jessehorne/goldnet/packets/dist"
+	packetscomponents "github.com/jessehorne/goldnet/packets/dist/components"
 )
 
-type Player struct {
-	ID        int64
-	X         int64
-	Y         int64
-	OldChunkX int64
-	OldChunkY int64
-	Sprite    rune
-	Inventory *inventory.Inventory
-	Conn      net.Conn
+func UpdateCombatSystem(gs *GameState) {
+	gs.Mutex.Lock()
+	defer gs.Mutex.Unlock()
 
-	LastMovementTime time.Time
-	LastAttackTime   time.Time
+	for _, player := range gs.PlayerComponents {
+		timePerAttack := 1000.0 / player.AttackSpeed
+		canAttackAt := player.LastAttackTime.Add(time.Duration(timePerAttack) * time.Millisecond)
+		if player.Hostile && canAttackAt.Before(time.Now()) {
+			playerPosition := gs.PositionComponents[player.ID]
+			if playerPosition == nil {
+				gs.Logger.Println("Player is missing a position component")
+				continue
+			}
+			// Attack the first zombie you find in range
+			for _, zombie := range gs.ZombieComponents {
+				zombiePosition := gs.PositionComponents[zombie.ID]
+				if zombiePosition == nil {
+					gs.Logger.Println("Zombie is missing a position component")
+					continue
+				}
+				xdist := zombiePosition.X - playerPosition.X
+				ydist := zombiePosition.Y - playerPosition.Y
 
-	Username    string
-	Gold        int64
-	HP          int64
-	ST          int64
-	Speed       byte    // how many blocks per second the player can travel (water speed is Speed/2)
-	AttackSpeed float32 // how many times the player can attack per second
+				// Must be on an adjacent, diagonal, or the same tile
+				if xdist*xdist <= 1 && ydist*ydist <= 1 {
+					player.LastAttackTime = time.Now()
+					zombie.HP -= player.ST
+					if zombie.HP <= 0 {
+						SendOneToOne(player.Conn, gs, &packets.Message{
+							Type: shared.PacketSendMessage,
+							Data: "(GAME) You struck the zombie down",
+						})
+						SendOneToAll(gs, &packets.RemoveZombie{
+							Type: shared.PacketRemoveZombie,
+							Id:   int64(zombie.ID),
+						})
+						gs.RemoveZombie(zombie.ID)
+					} else {
+						msg := fmt.Sprintf("You struck the zombie for %d HP", player.ST)
+						SendOneToOne(player.Conn, gs, &packets.Message{
+							Type: shared.PacketSendMessage,
+							Data: msg,
+						})
 
-	Hostile bool
-}
+						// Send zombie update to all players
+						SendOneToAll(gs, &packets.UpdateZombie{
+							Type:              shared.PacketUpdateZombie,
+							Id:                int64(zombie.ID),
+							Hp:                zombie.HP,
+							Damage:            zombie.Damage,
+							GoldDrop:          zombie.GoldDropAmt,
+							FollowingPlayerId: int64(zombie.FollowingPlayerId),
+						})
+					}
 
-func NewPlayer(id, x, y int64, inv []byte, c net.Conn) *Player {
-	return &Player{
-		ID:               id,
-		X:                x,
-		Y:                y,
-		Sprite:           '@',
-		Inventory:        inventory.NewInventory(inv),
-		Conn:             c,
-		LastMovementTime: time.Now(),
-		LastAttackTime:   time.Now(),
+					goto endattackattempt
+				}
+			}
 
-		Username:    "bob",
-		Gold:        0,
-		HP:          10,
-		ST:          2,
-		Speed:       10,
-		AttackSpeed: 1,
+			for _, otherPlayer := range gs.PlayerComponents {
 
-		Hostile: false,
-	}
-}
+				// Suicide watch
+				if otherPlayer.ID == player.ID {
+					continue
+				}
 
-func (p *Player) ToBytes() []byte {
-	var data []byte
+				otherPlayerPosition := gs.PositionComponents[otherPlayer.ID]
+				if otherPlayerPosition == nil {
+					gs.Logger.Println("Player is missing a position component")
+					continue
+				}
 
-	// Start with length of username
-	data = append(data, util.Int64ToBytes(int64(len(p.Username)))...)
-	// Add username bytes
-	data = append(data, []byte(p.Username)...)
-	// Add ID
-	data = append(data, util.Int64ToBytes(p.ID)...)
-	// Add X and Y coordinates
-	data = append(data, util.Int64ToBytes(p.X)...)
-	data = append(data, util.Int64ToBytes(p.Y)...)
-	// add Gold, HP and ST
-	data = append(data, util.Int64ToBytes(p.Gold)...)
-	data = append(data, util.Int64ToBytes(p.HP)...)
-	data = append(data, util.Int64ToBytes(p.ST)...)
+				xdist := otherPlayerPosition.X - playerPosition.X
+				ydist := otherPlayerPosition.Y - playerPosition.Y
 
-	// Add hostile flag
-	if p.Hostile {
-		data = append(data, util.Int64ToBytes(1)...)
-	} else {
-		data = append(data, util.Int64ToBytes(0)...)
-	}
+				// Must be on an adjacent or the same tile
+				// Diagonal works too
+				if xdist*xdist <= 1 && ydist*ydist <= 1 {
+					player.LastAttackTime = time.Now()
+					otherPlayer.HP -= player.ST
 
-	return data
-}
+					msg1 := fmt.Sprintf("You struck %s for %d HP", otherPlayer.Username, player.ST)
+					SendOneToOne(player.Conn, gs, &packets.Message{
+						Type: shared.PacketSendMessage,
+						Data: msg1,
+					})
 
-func (p *Player) Action(a int32) {
-	if a == shared.ActionMoveLeft {
-		p.X--
-	} else if a == shared.ActionMoveRight {
-		p.X++
-	} else if a == shared.ActionMoveUp {
-		p.Y--
-	} else if a == shared.ActionMoveDown {
-		p.Y++
-	}
-}
+					msg2 := fmt.Sprintf("You were struck by %s for %d HP", player.Username, player.ST)
+					SendOneToOne(otherPlayer.Conn, gs, &packets.Message{
+						Type: shared.PacketSendMessage,
+						Data: msg2,
+					})
 
-func ParsePlayerFromBytes(data []byte) *Player {
-	usernameLen := util.BytesToInt64(data[0:8])
-	var usernameData []byte
-	counter := int64(8)
-	for i := int64(0); i < usernameLen; i++ {
-		usernameData = append(usernameData, data[counter])
-	}
-	username := string(usernameData)
+					if otherPlayer.HP <= 0 {
+						msg := fmt.Sprintf("You struck down %s", otherPlayer.Username)
+						SendOneToOne(player.Conn, gs, &packets.Message{
+							Type: shared.PacketSendMessage,
+							Data: msg,
+						})
 
-	counter += usernameLen
-	id := util.BytesToInt64(data[counter : counter+8])
-	counter += 8
-	x := util.BytesToInt64(data[counter : counter+8])
-	counter += 8
-	y := util.BytesToInt64(data[counter : counter+8])
-	counter += 8
+						msg2 = fmt.Sprintf("YOU WERE STRUCK DOWN BY %s", player.Username)
+						SendOneToOne(otherPlayer.Conn, gs, &packets.Message{
+							Type: shared.PacketSendMessage,
+							Data: msg2,
+						})
 
-	gold := util.BytesToInt64(data[counter : counter+8])
-	counter += 8
-	hp := util.BytesToInt64(data[counter : counter+8])
-	counter += 8
-	st := util.BytesToInt64(data[counter : counter+8])
-	counter += 8
-	hostileInt := util.BytesToInt64(data[counter : counter+8])
-	counter += 8
+						// TODO - Drop stuff and do a respawn
+						otherPlayer.Gold = 0
+						otherPlayer.HP = 10
+						otherPlayerPosition.X = 0
+						otherPlayerPosition.Y = 0
 
-	return &Player{
-		ID:       id,
-		Username: username,
-		X:        x,
-		Y:        y,
-		Gold:     gold,
-		HP:       hp,
-		ST:       st,
-		Hostile:  hostileInt == 1,
+						SendOneToAll(gs, &packetscomponents.UpdatePosition{
+							Type:     shared.PacketUpdatePosition,
+							EntityId: int64(otherPlayer.ID),
+							X:        otherPlayerPosition.X,
+							Y:        otherPlayerPosition.Y,
+						})
+					}
+
+					// send update to all players
+					SendOneToAll(gs, &packets.UpdatePlayer{
+						Type:      shared.PacketUpdatePlayer,
+						Id:        int64(otherPlayer.ID),
+						Username:  otherPlayer.Username,
+						Gold:      otherPlayer.Gold,
+						Hp:        otherPlayer.HP,
+						St:        otherPlayer.ST,
+						Hostile:   otherPlayer.Hostile,
+						Inventory: otherPlayer.Inventory.ToBytes(),
+					})
+
+					goto endattackattempt
+				}
+			}
+
+		endattackattempt:
+			continue
+		}
 	}
 }

@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"net"
+
 	"github.com/jessehorne/goldnet/internal/client/gui"
 	"github.com/jessehorne/goldnet/internal/game"
+	"github.com/jessehorne/goldnet/internal/game/components"
 	"github.com/jessehorne/goldnet/internal/util"
 	packets "github.com/jessehorne/goldnet/packets/dist"
 	"google.golang.org/protobuf/proto"
-	"net"
 )
 
 func ClientPlayerSelfJoinedHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []byte) {
@@ -17,23 +19,10 @@ func ClientPlayerSelfJoinedHandler(g *gui.GUI, gs *game.GameState, conn net.Conn
 		return
 	}
 
-	p := game.NewPlayer(sj.Self.Id, sj.Self.X, sj.Self.Y, sj.Self.Inventory, nil)
+	p := components.NewPlayer(components.EntityId(sj.Self.Id), sj.Self.Inventory, nil)
 	gs.AddPlayer(p)
 	gs.SetIntStore("playerID", sj.Self.Id)
 	g.Sidebar.UpdatePlayerStats(p)
-
-	for _, op := range sj.Others {
-		otherPlayer := &game.Player{
-			ID:       op.Id,
-			X:        op.X,
-			Y:        op.Y,
-			Username: op.Username,
-			HP:       op.Hp,
-			ST:       op.St,
-			Hostile:  op.Hostile,
-		}
-		gs.AddPlayer(otherPlayer)
-	}
 
 	g.Chat.AddMessage(util.NewSystemMessage("GAME", "You've connected to GoldNet Official. Good luck!"))
 }
@@ -46,9 +35,8 @@ func ClientPlayerJoinedHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, da
 		return
 	}
 
-	newPlayer := &game.Player{
-		ID:       pj.Id,
-		X:        pj.X,
+	newPlayer := &components.Player{
+		ID:       components.EntityId(pj.Id),
 		Username: pj.Username,
 		HP:       pj.Hp,
 		Hostile:  pj.Hostile,
@@ -67,5 +55,5 @@ func ClientPlayerDisconnectedHandler(g *gui.GUI, gs *game.GameState, conn net.Co
 	}
 
 	g.Chat.AddMessage(util.NewSystemMessage("GAME", "A player has vanished!"))
-	gs.RemovePlayer(pd.Id)
+	gs.RemovePlayer(components.EntityId(pd.Id))
 }

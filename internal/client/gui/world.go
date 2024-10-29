@@ -5,6 +5,7 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/jessehorne/goldnet/internal/game"
+	"github.com/jessehorne/goldnet/internal/game/components"
 	"github.com/jessehorne/goldnet/internal/shared"
 	"github.com/rivo/tview"
 )
@@ -31,7 +32,7 @@ func NewWorld(gs *game.GameState) *World {
 		OffsetY:   13,
 		GameState: gs,
 	}
-	box = box.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
+	box.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
 		m.Draw(screen, x, y, width, height)
 		return x, y, width, height
 	})
@@ -44,6 +45,15 @@ func (m *World) Draw(screen tcell.Screen, x, y, width, height int) {
 
 	m.GameState.Mutex.Lock()
 	defer m.GameState.Mutex.Unlock()
+
+	playerId, exists := m.GameState.IntStore["playerID"]
+	if exists {
+		playerPosition := m.GameState.PositionComponents[components.EntityId(playerId)]
+		if playerPosition != nil {
+			m.OffsetX = 50 + -int(playerPosition.X)
+			m.OffsetY = 13 + -int(playerPosition.Y)
+		}
+	}
 
 	for _, c := range m.Chunks {
 		startX := c.X * game.CHUNK_W
@@ -63,28 +73,17 @@ func (m *World) Draw(screen tcell.Screen, x, y, width, height int) {
 		}
 	}
 
-	// draw players
-	for _, p := range m.GameState.Players {
-		if p != nil {
-			bx := m.OffsetX + int(p.X)
-			by := m.OffsetY + int(p.Y)
-			if bx > 0 && bx < width && by > 0 && by < 26 {
-				style := tcell.StyleDefault.Foreground(tcell.ColorWhite)
-				if p.Hostile {
-					style = style.Background(tcell.ColorRed)
+	// draw sprites
+	for entityId, sprite := range m.GameState.SpriteComponents {
+		if sprite != nil {
+			entityPosition := m.GameState.PositionComponents[entityId]
+			if entityPosition != nil {
+				bx := m.OffsetX + int(entityPosition.X)
+				by := m.OffsetY + int(entityPosition.Y)
+				if bx > 0 && bx < width && by > 0 && by < 26 {
+					style := tcell.StyleDefault.Foreground(sprite.Foreground).Background(sprite.Background)
+					screen.SetContent(bx, by, sprite.Character, nil, style)
 				}
-				screen.SetContent(bx, by, '@', nil, style)
-			}
-		}
-	}
-
-	// draw zombies
-	for _, z := range m.GameState.Zombies {
-		if z != nil {
-			bx := m.OffsetX + int(z.X)
-			by := m.OffsetY + int(z.Y)
-			if bx > 0 && bx < width && by > 0 && by < 26 {
-				screen.SetContent(bx, by, 'Z', nil, tcell.StyleDefault.Foreground(tcell.ColorWhite))
 			}
 		}
 	}

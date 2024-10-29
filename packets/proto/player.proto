@@ -1,14 +1,12 @@
 syntax = "proto3";
 package packets;
 
-option go_package = "dist;packets";
+option go_package = "./dist;packets";
 
 message UpdatePlayer{
   int32 type = 1;
   int64 id = 2;
   string username = 3;
-  int64 x = 4;
-  int64 y = 5;
   int64 gold = 6;
   int64 hp = 7;
   int64 st = 8;
@@ -19,7 +17,6 @@ message UpdatePlayer{
 message SelfJoin{
   int32 type = 1;
   UpdatePlayer self = 2;
-  repeated UpdatePlayer others = 3;
 }
 
 message Leave{

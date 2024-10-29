@@ -1,0 +1,12 @@
+syntax = "proto3";
+package packets;
+
+option go_package = "./dist/components;packets";
+
+message UpdateSprite{
+  int32 type = 1;
+  int64 entityId = 2;
+  int32 character = 3;
+  int64 foreground = 4;
+  int64 background = 5;
+}

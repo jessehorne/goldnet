@@ -1,0 +1,11 @@
+syntax = "proto3";
+package packets;
+
+option go_package = "./dist/components;packets";
+
+message UpdatePosition{
+  int32 type = 1;
+  int64 entityId = 2;
+  int64 x = 3;
+  int64 y = 4;
+}

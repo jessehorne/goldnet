@@ -1,11 +1,12 @@
 package handlers
 
 import (
+	"net"
+
 	"github.com/jessehorne/goldnet/internal/client/gui"
 	"github.com/jessehorne/goldnet/internal/game"
 	packets "github.com/jessehorne/goldnet/packets/dist"
 	"google.golang.org/protobuf/proto"
-	"net"
 )
 
 func ClientChunksHandler(g *gui.GUI, gs *game.GameState, conn net.Conn, data []byte) {

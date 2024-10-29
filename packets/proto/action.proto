@@ -1,7 +1,7 @@
 syntax = "proto3";
 package packets;
 
-option go_package = "dist;packets";
+option go_package = "./dist;packets";
 
 message Action{
   int32 type = 1;
